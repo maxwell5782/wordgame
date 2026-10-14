@@ -111,11 +111,12 @@ function speakButton(word) {
 
 // 回傳 Promise<boolean>：答對 true，答錯 false
 // resultNote(correct) 可以換掉答題後的說明文字（預設是重骰用的說明）
-export function openQuiz(difficulty, run, { resultNote } = {}) {
+// word 指定要考哪個字（複習練習用）；quitLabel 有給的話會多一個中途離開的按鈕，按了 resolve(null)
+export function openQuiz(difficulty, run, { resultNote, word: fixedWord, quitLabel } = {}) {
   return new Promise(resolve => {
     // 困難題避開太長的字
     const filter = difficulty === 'hard' ? w => w.en.length <= 7 : () => true;
-    const word = pickWord(run.topic, run.wordLevel, filter);
+    const word = fixedWord ?? pickWord(run.topic, run.wordLevel, filter);
     const diff = DIFFICULTY[difficulty] ?? OTHER_QUIZ[difficulty];
 
     const finish = correct => {
@@ -196,6 +197,7 @@ export function openQuiz(difficulty, run, { resultNote } = {}) {
     }
 
     const card = el('div', { class: 'card quiz' },
+      quitLabel ? el('button', { class: 'btn quiz-quit', type: 'button', onclick: () => { unmount('quiz'); resolve(null); } }, quitLabel) : null,
       el('div', { class: `quiz-tag d-${difficulty}` }, `${diff.name}題 · ${diff.desc}`),
       body);
     mount(el('div', { class: 'screen modal' }, card), 'quiz');
