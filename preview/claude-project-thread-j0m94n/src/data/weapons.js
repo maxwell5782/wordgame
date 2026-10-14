@@ -9,7 +9,7 @@ export const WEAPONS = {
   shotgun: {
     name: '散彈槍', icon: '💥', desc: '近距離一次射出好幾發，每升一階多 1 發。', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
     baseCost: 20, damage: 4, cooldown: 1.45, range: 300, bulletSpeed: 850,
-    pellets: 5, spread: 0.55, pierce: 0, knockback: 10,
+    pellets: 5, spread: 25 * Math.PI / 180, pierce: 0, knockback: 10,
   },
   knife: {
     name: '飛刀', icon: '🗡️', desc: '出手很快又能穿透敵人，每升一階多穿透 1 隻。', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
