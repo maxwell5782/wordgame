@@ -24,21 +24,21 @@ export class Joystick {
     };
     this.onMove = p => {
       if (p.id !== this.pointerId) return;
-      let dx = p.x - this.ox;
-      let dy = p.y - this.oy;
+      const dx = p.x - this.ox;
+      const dy = p.y - this.oy;
       const len = Math.hypot(dx, dy);
-      if (len > MAX_DIST) {
-        dx = dx / len * MAX_DIST;
-        dy = dy / len * MAX_DIST;
-      }
-      this.knob.setPosition(this.ox + dx, this.oy + dy);
-      const n = Math.min(len, MAX_DIST) / MAX_DIST;
-      if (n < DEAD_ZONE || len === 0) {
+      // 拖超過搖桿邊緣時，旋鈕停在邊上，但方向和全速不變
+      const clamped = Math.min(len, MAX_DIST);
+      const ux = len ? dx / len : 0;
+      const uy = len ? dy / len : 0;
+      this.knob.setPosition(this.ox + ux * clamped, this.oy + uy * clamped);
+      const n = clamped / MAX_DIST;
+      if (n < DEAD_ZONE) {
         this.vec.set(0, 0);
         return;
       }
       const mag = Math.min(1, (n - DEAD_ZONE) / (FULL_SPEED_AT - DEAD_ZONE));
-      this.vec.set(dx / len * mag, dy / len * mag);
+      this.vec.set(ux * mag, uy * mag);
     };
     this.onUp = p => {
       if (p.id === this.pointerId) this.reset();
