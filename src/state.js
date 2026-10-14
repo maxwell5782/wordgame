@@ -1,4 +1,6 @@
 // 一局遊戲的狀態與規則。
+import { BOSS_EVERY, BOSS_ENRAGE_TIME, BOSS_ENRAGE_SPEED, BOSS_ENRAGE_CD } from './data/bosses.js';
+
 export const MAX_WAVES = 10;
 
 export const RARITY = [
@@ -113,6 +115,8 @@ export const RULES = [
   `倒下時答對英文題可接關，每局 ${MAX_REVIVES} 次`,
   `每波開始答對聽力題，這一波傷害 +${LISTEN_WAVE_DAMAGE}%`,
   '升級時答對中等題，四個能力選項都升一階',
+  `每 ${BOSS_EVERY} 波出現魔王，打倒魔王這一波才結束（沒有時間限制，小怪比較少）`,
+  `魔王出場 ${BOSS_ENRAGE_TIME} 秒後狂暴：移動速度 ×${BOSS_ENRAGE_SPEED}、出招間隔 ×${BOSS_ENRAGE_CD}`,
 ];
 
 // 玩家基礎移動速度（像素/秒），只比史萊姆（105）快一點，想跑更快要靠道具；改這裡時記得一起看敵人速度

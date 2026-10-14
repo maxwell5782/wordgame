@@ -25,8 +25,8 @@ let run = null;
 const arena = () => game.scene.getScene('arena');
 
 const hooks = {
-  onHud(timeLeft) {
-    hud.update(run, timeLeft);
+  onHud(timeLeft, boss) {
+    hud.update(run, timeLeft, boss);
   },
   async onWaveEnd() {
     if (run.wave >= MAX_WAVES) {
