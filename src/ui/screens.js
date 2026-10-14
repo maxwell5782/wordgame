@@ -4,8 +4,8 @@ import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from
 import { ITEMS, itemDesc } from '../data/items.js';
 import { BOSSES, BOSS_IDS, BOSS_EVERY, BOSS_ENRAGE_TIME, BOSS_ENRAGE_SPEED, BOSS_ENRAGE_CD, attackDesc } from '../data/bosses.js';
 import { SPRITES, spriteDataUrl } from '../art/pixel.js';
-import { RARITY, STATS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
-import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
+import { RARITY, STATS, START_WEAPONS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
+import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, getSavedStartWeapon, saveStartWeapon, hasSeenGear } from '../progress.js';
 import { speak, canSpeak, getEnglishVoices, getVoice, isAutoVoice, setVoice, onVoicesChanged } from '../speech.js';
 import { el, mount, unmount, shuffle } from './dom.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
@@ -15,6 +15,8 @@ export function showMenu({ onStart }) {
   if (topic !== ALL_TOPICS && !TOPICS.includes(topic)) topic = ALL_TOPICS;
   let level = getSavedLevel();
   if (level !== ALL_LEVELS && !LEVELS[level]) level = ALL_LEVELS;
+  let weapon = getSavedStartWeapon();
+  if (!START_WEAPONS.includes(weapon)) weapon = 'pistol';
   const screen = el('div', { class: 'screen menu' });
   // 字太少（少於 MIN_POOL 個）的主題＋程度組合不能選，免得一直出同一個字
   const MIN_POOL = 4;
@@ -39,7 +41,13 @@ export function showMenu({ onStart }) {
           class: `btn chip-btn ${l === level ? 'on' : ''}`, type: 'button', disabled: !levelOk(topic, l),
           onclick: () => { level = l; saveLevel(l); render(); },
         }, `${l === ALL_LEVELS ? '全部' : LEVELS[l]} (${wordsForTopic(topic, l).length})`))),
-      el('button', { class: 'btn primary huge', type: 'button', onclick: () => onStart(topic, level) }, '▶ 開始遊戲'),
+      el('div', { class: 'section-title' }, '選擇起始武器'),
+      el('div', { class: 'topics' }, START_WEAPONS.map(id =>
+        el('button', {
+          class: `btn chip-btn ${id === weapon ? 'on' : ''}`, type: 'button',
+          onclick: () => { weapon = id; saveStartWeapon(id); render(); },
+        }, `${WEAPONS[id].icon} ${WEAPONS[id].name}`))),
+      el('button', { class: 'btn primary huge', type: 'button', onclick: () => onStart(topic, level, weapon) }, '▶ 開始遊戲'),
       el('div', { class: 'row' },
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('words') }, `📖 單字圖鑑 ${coll.size}/${WORDS.length}`),
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, `⚔️ 武器道具圖鑑 ${gearSeenCount()}/${GEAR_TOTAL}`),
