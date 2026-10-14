@@ -95,8 +95,8 @@ export const RULES = [
   '波次結束時地上的材料自動收進來',
 ];
 
-// 玩家基礎移動速度（像素/秒），只比第 10 波的衝衝鬼（200×1.18≈236）快一點；改這裡時記得一起看敵人速度
-export const BASE_PLAYER_SPEED = 250;
+// 玩家基礎移動速度（像素/秒），只比史萊姆（105）快一點，想跑更快要靠道具；改這裡時記得一起看敵人速度
+export const BASE_PLAYER_SPEED = 110;
 
 export function playerSpeed(stats) {
   return Math.max(BASE_PLAYER_SPEED * 0.4, BASE_PLAYER_SPEED * (1 + stats.speed / 100));
