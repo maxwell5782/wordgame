@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1124">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="單字大作戰">
+  <meta name="description" content="給小朋友練英文單字的波次生存遊戲，打開網頁就能玩。">
+  <title>單字大作戰</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game"></div>
+
+  <div id="hud" hidden>
+    <div class="hud-left">
+      <div class="bar hp"><div class="fill" id="hp-fill"></div><span id="hp-text"></span></div>
+      <div class="bar xp"><div class="fill" id="xp-fill"></div></div>
+      <div class="mats">💎 <span id="mat-text">0</span> <span id="lv-text" class="lv"></span></div>
+    </div>
+    <div class="hud-center">
+      <div id="wave-text"></div>
+      <div id="timer-text"></div>
+      <div id="boss-bar" style="display: none">
+        <div id="boss-name"></div>
+        <div class="bar boss"><div class="fill" id="boss-fill"></div><span id="boss-text"></span></div>
+      </div>
+    </div>
+    <button id="pause-btn" class="btn icon-btn" type="button" aria-label="暫停">⏸</button>
+  </div>
+
+  <div id="ui"></div>
+  <div id="rotate-hint">📱 請把手機轉成橫的來玩</div>
+
+  <script src="lib/phaser-arcade-physics.min.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
