@@ -136,6 +136,8 @@ button.chip { cursor: pointer; }
 .topics { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 16px; }
 .chip-btn { min-height: 38px; padding: 6px 14px; border-radius: 999px; }
 .chip-btn.on { background: var(--accent); color: #2a2100; border-color: #b38a00; }
+.voice-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.voice-list .chip-btn { text-align: left; border-radius: 10px; }
 .menu .row { justify-content: center; }
 .stat-row { display: flex; justify-content: center; gap: 12px; margin: 12px 0; }
 .stat-box { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 10px 18px; display: grid; }
