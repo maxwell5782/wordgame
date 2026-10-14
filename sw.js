@@ -1,6 +1,6 @@
 // 離線快取：第一次開啟後，沒有網路也能玩。
 // 修改任何檔案後，請把 VERSION 加 1，玩家下次開啟就會拿到新版。
-const VERSION = 21;
+const VERSION = 22;
 const CACHE = `wordgame-v${VERSION}`;
 const ASSETS = [
   './',
