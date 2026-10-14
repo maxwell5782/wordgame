@@ -1,4 +1,5 @@
 import { ENEMIES } from '../data/enemies.js';
+import { BOSSES } from '../data/bosses.js';
 import { SPRITES, makePixelTexture, makePixelDisc } from '../art/pixel.js';
 
 // 用程式畫出所有圖形（像素風，見 src/art/pixel.js），不需要任何圖片檔。
@@ -18,6 +19,9 @@ export class BootScene extends Phaser.Scene {
         frameRate: key === 'tank' ? 3 : key === 'runner' ? 8 : 4,
         repeat: -1,
       });
+    }
+    for (const [id, b] of Object.entries(BOSSES)) {
+      this.anims.create({ key: 'a_' + id, frames: this.anims.generateFrameNumbers(b.tex, { start: 0, end: 1 }), frameRate: 3, repeat: -1 });
     }
 
     // 爆炸（白色，遊戲中縮放到爆炸半徑並上色）
