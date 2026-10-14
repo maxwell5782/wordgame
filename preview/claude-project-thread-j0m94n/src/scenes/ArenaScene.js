@@ -2,12 +2,18 @@ import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
 import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT, REVIVE_INVULN, REVIVE_CLEAR_RADIUS } from '../state.js';
 import { Joystick } from '../input/joystick.js';
+import { KeyboardMove } from '../input/keyboard.js';
 import { makeArenaTexture } from '../art/pixel.js';
+import { BOSSES, bossForWave, BOSS_ENRAGE_TIME, BOSS_ENRAGE_SPEED, BOSS_ENRAGE_CD, BOSS_WAVE_SPAWN_SLOW, BOSS_WAVE_ENEMY_CAP } from '../data/bosses.js';
+import { markGearSeen } from '../progress.js';
 
 export const GAME_W = 1280;
 export const GAME_H = 720;
 const ARENA = new Phaser.Geom.Rectangle(40, 40, 1200, 640);
 const WARN_TIME = 0.8;
+// 魔王波開始後幾秒魔王登場；打倒魔王後幾秒結束這一波
+const BOSS_ENTER_TIME = 1.5;
+const BOSS_OUTRO_TIME = 2;
 
 export class ArenaScene extends Phaser.Scene {
   constructor() {
@@ -40,20 +46,26 @@ export class ArenaScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(50).setActive(false).setVisible(false));
     }
     this.weaponSlots = [];
+    // 魔王的子彈與招式警示（紅圈、紅線）
+    this.ebullets = this.physics.add.group({ maxSize: 300 });
+    this.hazards = [];
+    this.hazardGfx = this.add.graphics().setDepth(2);
+    this.boss = null;
 
     this.physics.add.overlap(this.bullets, this.enemies, this.onBulletHit, null, this);
     this.physics.add.overlap(this.player, this.enemies, this.onPlayerTouch, null, this);
+    this.physics.add.overlap(this.player, this.ebullets, this.onOrbHit, null, this);
     // 敵人之間互相推開，不會全部疊成一團
     this.physics.add.collider(this.enemies, this.enemies);
 
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
+    this.keys = new KeyboardMove();
     this.joy = new Joystick(this);
     this.hint = this.add.text(GAME_W / 2, GAME_H - 80, '', {
       fontFamily: 'system-ui, sans-serif', fontSize: '26px', fontStyle: 'bold',
       color: '#ffffff', stroke: '#000000', strokeThickness: 5, align: 'center',
     }).setOrigin(0.5).setDepth(60);
 
-    this.events.once('shutdown', () => this.joy.destroy());
+    this.events.once('shutdown', () => { this.joy.destroy(); this.keys.destroy(); });
     this.startWave();
   }
 
@@ -68,7 +80,12 @@ export class ArenaScene extends Phaser.Scene {
   startWave() {
     const run = this.run;
     run.hp = run.stats.maxHp;
-    this.waveTime = waveDuration(run.wave);
+    // 魔王波沒有時間限制，打倒魔王才結束
+    this.bossId = bossForWave(run.wave);
+    this.boss = null;
+    this.bossEnterIn = this.bossId ? BOSS_ENTER_TIME : 0;
+    this.bossOutro = 0;
+    this.waveTime = this.bossId ? Infinity : waveDuration(run.wave);
     this.elapsed = 0;
     this.spawnAcc = 0.5;
     this.regenAcc = 0;
@@ -81,8 +98,10 @@ export class ArenaScene extends Phaser.Scene {
     this.refreshWeapons();
     this.physics.resume();
     const buff = run.waveDamage ? `\n聽力題答對：這一波傷害 +${run.waveDamage}%` : '';
-    this.hint.setText((run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`) + buff);
-    this.hintTime = run.wave === 1 ? 4 : 1.5;
+    const title = this.bossId ? `⚠️ 魔王來了：${BOSSES[this.bossId].name}！\n打倒牠這一波才會結束`
+      : run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`;
+    this.hint.setText(title + buff);
+    this.hintTime = run.wave === 1 || this.bossId ? 3 : 1.5;
     this.hint.setVisible(true).setAlpha(1);
     this.pushHud();
   }
@@ -115,6 +134,13 @@ export class ArenaScene extends Phaser.Scene {
     this.bullets.children.iterate(b => { if (b.active) b.disableBody(true, true); });
     this.warns.children.iterate(w => { if (w.active) w.setActive(false).setVisible(false); });
     for (const f of this.floats) f.setActive(false).setVisible(false);
+    this.clearBossAttacks();
+  }
+
+  clearBossAttacks() {
+    this.ebullets.children.iterate(o => { if (o.active) o.disableBody(true, true); });
+    this.hazards.length = 0;
+    this.hazardGfx.clear();
   }
 
   setPaused(p) {
@@ -142,8 +168,9 @@ export class ArenaScene extends Phaser.Scene {
     const py = this.player.y;
     const r2 = REVIVE_CLEAR_RADIUS * REVIVE_CLEAR_RADIUS;
     this.enemies.children.iterate(e => {
-      if (e.active && (e.x - px) ** 2 + (e.y - py) ** 2 <= r2) e.disableBody(true, true);
+      if (e.active && !e.boss && (e.x - px) ** 2 + (e.y - py) ** 2 <= r2) e.disableBody(true, true);
     });
+    this.clearBossAttacks();
     this.invuln = REVIVE_INVULN;
     this.player.clearTint().setAlpha(1);
     this.joy.reset();
@@ -180,6 +207,8 @@ export class ArenaScene extends Phaser.Scene {
     this.updatePlayer(dt);
     this.updateSpawns(dt);
     this.updateEnemies(dt);
+    this.updateBoss(dt);
+    this.updateHazards(dt);
     this.updateWeapons(dt);
     this.updateBullets(dt);
     this.updateMats(dt);
@@ -196,22 +225,18 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.pushHud();
+    if (this.bossOutro > 0) {
+      this.bossOutro -= dt;
+      if (this.bossOutro <= 0) this.endWave();
+    }
     if (this.elapsed >= this.waveTime) this.endWave();
   }
 
   updatePlayer(dt) {
-    const k = this.keys;
-    let mx = 0;
-    let my = 0;
-    if (k.A.isDown || k.LEFT.isDown) mx -= 1;
-    if (k.D.isDown || k.RIGHT.isDown) mx += 1;
-    if (k.W.isDown || k.UP.isDown) my -= 1;
-    if (k.S.isDown || k.DOWN.isDown) my += 1;
-    if (mx || my) {
-      const l = Math.hypot(mx, my);
-      mx /= l;
-      my /= l;
-    } else {
+    const k = this.keys.read();
+    let mx = k.x;
+    let my = k.y;
+    if (!mx && !my) {
       mx = this.joy.vec.x;
       my = this.joy.vec.y;
     }
@@ -233,10 +258,10 @@ export class ArenaScene extends Phaser.Scene {
 
   updateSpawns(dt) {
     const wave = this.run.wave;
-    // 最後 1 秒不再出怪
-    if (this.elapsed < this.waveTime - 1) {
+    // 最後 1 秒、打倒魔王之後不再出怪
+    if (this.elapsed < this.waveTime - 1 && this.bossOutro <= 0) {
       this.spawnAcc += dt;
-      const interval = Math.max(0.4, 1.6 - wave * 0.12);
+      const interval = Math.max(0.4, 1.6 - wave * 0.12) * (this.bossId ? BOSS_WAVE_SPAWN_SLOW : 1);
       if (this.spawnAcc >= interval) {
         this.spawnAcc -= interval;
         this.queueSpawnGroup();
@@ -255,7 +280,7 @@ export class ArenaScene extends Phaser.Scene {
 
   queueSpawnGroup() {
     const wave = this.run.wave;
-    const cap = Math.min(200, 40 + wave * 16);
+    const cap = Math.min(200, 40 + wave * 16) * (this.bossId ? BOSS_WAVE_ENEMY_CAP : 1);
     const pending = this.warns.countActive(true);
     if (this.enemies.countActive(true) + pending >= cap) return;
 
@@ -293,19 +318,281 @@ export class ArenaScene extends Phaser.Scene {
     e.speed = def.speed * sc.speed;
     e.drop = def.drop;
     e.flash = 0;
+    // 物件池裡的這隻可能之前當過魔王
+    e.boss = false;
+    e.body.setImmovable(false);
   }
 
   updateEnemies(dt) {
     const p = this.player;
     this.enemies.children.iterate(e => {
       if (!e.active) return;
-      this.physics.moveToObject(e, p, e.speed);
-      e.setFlipX(e.x > p.x);
       if (e.flash > 0) {
         e.flash -= dt;
         if (e.flash <= 0) e.clearTint();
       }
+      if (e.boss) return;
+      this.physics.moveToObject(e, p, e.speed);
+      e.setFlipX(e.x > p.x);
     });
+  }
+
+  // ---------- 魔王 ----------
+
+  spawnBoss() {
+    const def = BOSSES[this.bossId];
+    // 從離玩家比較遠的那一側登場
+    const x = GAME_W / 2;
+    const y = this.player.y > GAME_H / 2 ? ARENA.y + def.r + 20 : ARENA.bottom - def.r - 20;
+    const b = this.enemies.get(x, y, def.tex);
+    if (!b) return;
+    b.enableBody(true, x, y, true, true);
+    b.setTexture(def.tex, 0).setDepth(6).clearTint();
+    b.play('a_' + this.bossId);
+    b.body.setCircle(def.r, b.width / 2 - def.r, b.height / 2 - def.r);
+    b.body.setImmovable(true);
+    b.setCollideWorldBounds(true);
+    Object.assign(b, {
+      boss: true, def, hp: def.hp, dmg: def.dmg, speed: def.speed, drop: def.drop, flash: 0,
+      age: 0, cd: def.cooldown, next: 0, act: null, enraged: false,
+    });
+    this.boss = b;
+    markGearSeen('boss', this.bossId);
+    this.cameras.main.shake(400, 0.01);
+    this.showFloat(x, y - def.r - 20, `${def.icon} ${def.name}`, '#ffd84d', 1.5);
+  }
+
+  updateBoss(dt) {
+    if (this.bossEnterIn > 0) {
+      this.bossEnterIn -= dt;
+      if (this.bossEnterIn <= 0) this.spawnBoss();
+      return;
+    }
+    const b = this.boss;
+    if (!b || !b.active) return;
+    b.age += dt;
+    if (!b.enraged && b.age >= BOSS_ENRAGE_TIME) {
+      b.enraged = true;
+      this.cameras.main.shake(300, 0.008);
+      this.showFloat(b.x, b.y - b.def.r - 20, '🔥 狂暴！', '#ff6b6b', 1.5);
+    }
+    if (b.enraged && b.flash <= 0) b.setTint(0xff8a8a);
+    if (b.act) {
+      this.runBossAction(b, dt);
+      return;
+    }
+    this.physics.moveToObject(b, this.player, b.speed * (b.enraged ? BOSS_ENRAGE_SPEED : 1));
+    b.setFlipX(b.x > this.player.x);
+    b.cd -= dt;
+    if (b.cd <= 0) {
+      const atks = b.def.attacks;
+      this.startBossAttack(b, atks[b.next % atks.length]);
+      b.next += 1;
+    }
+  }
+
+  endBossAction(b, rest = 0) {
+    b.act = null;
+    b.cd = b.def.cooldown * (b.enraged ? BOSS_ENRAGE_CD : 1) + rest;
+  }
+
+  startBossAttack(b, a) {
+    b.setVelocity(0, 0);
+    this.showFloat(b.x, b.y - b.def.r - 20, a.name + '！', '#ffd84d', 0.9);
+    const p = this.player;
+    const act = { a, t: 0, n: 0 };
+    b.act = act;
+    switch (a.type) {
+      case 'slam': {
+        // 鎖定玩家現在的位置，先蹲一下再跳過去
+        act.sx = b.x;
+        act.sy = b.y;
+        act.tx = Phaser.Math.Clamp(p.x, ARENA.x + b.def.r, ARENA.right - b.def.r);
+        act.ty = Phaser.Math.Clamp(p.y, ARENA.y + b.def.r, ARENA.bottom - b.def.r);
+        this.addHazard({ type: 'circle', x: act.tx, y: act.ty, r: a.radius, t: a.warn, dmg: a.dmg });
+        break;
+      }
+      case 'dash': {
+        act.ang = Phaser.Math.Angle.Between(b.x, b.y, p.x, p.y);
+        this.addHazard({ type: 'line', x: b.x, y: b.y, ang: act.ang, len: a.dist, w: b.def.r * 2, t: a.warn });
+        break;
+      }
+      case 'meteor': {
+        for (let i = 0; i < a.count; i++) {
+          // 第一顆對準玩家，其他散在附近
+          const ox = i === 0 ? 0 : Phaser.Math.Between(-200, 200);
+          const oy = i === 0 ? 0 : Phaser.Math.Between(-200, 200);
+          this.addHazard({
+            type: 'circle', r: a.radius, t: a.warn + i * 0.15, dmg: a.dmg, boom: 0xff7a3a,
+            x: Phaser.Math.Clamp(p.x + ox, ARENA.x + 20, ARENA.right - 20),
+            y: Phaser.Math.Clamp(p.y + oy, ARENA.y + 20, ARENA.bottom - 20),
+          });
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  runBossAction(b, dt) {
+    const act = b.act;
+    const a = act.a;
+    act.t += dt;
+    switch (a.type) {
+      case 'slam': {
+        const jumpAt = a.warn * 0.5;
+        if (act.t < jumpAt) return;
+        if (act.t < a.warn) {
+          // 跳在半空中：打不到、也撞不到
+          if (b.body.enable) {
+            b.body.enable = false;
+            b.setDepth(12);
+          }
+          const k = (act.t - jumpAt) / (a.warn - jumpAt);
+          b.x = act.sx + (act.tx - act.sx) * k;
+          b.y = act.sy + (act.ty - act.sy) * k - Math.sin(k * Math.PI) * 140;
+          return;
+        }
+        if (!b.body.enable) {
+          b.body.enable = true;
+          b.body.reset(act.tx, act.ty);
+          b.setDepth(6);
+          this.cameras.main.shake(200, 0.012);
+          for (let i = 0; i < a.summon; i++) {
+            const ang = (i / a.summon) * Math.PI * 2;
+            this.spawnEnemy('slime',
+              Phaser.Math.Clamp(act.tx + Math.cos(ang) * (b.def.r + 30), ARENA.x + 20, ARENA.right - 20),
+              Phaser.Math.Clamp(act.ty + Math.sin(ang) * (b.def.r + 30), ARENA.y + 20, ARENA.bottom - 20));
+          }
+        }
+        if (act.t >= a.warn + 0.4) this.endBossAction(b);
+        return;
+      }
+      case 'ring': {
+        const gap = 0.35;
+        while (act.n < a.rounds && act.t >= act.n * gap) {
+          const off = act.n * Math.PI / a.count;
+          for (let i = 0; i < a.count; i++) {
+            this.fireOrb(b.x, b.y, off + (i / a.count) * Math.PI * 2, a.speed, a.dmg, a.color);
+          }
+          act.n += 1;
+        }
+        if (act.t >= a.rounds * gap + 0.2) this.endBossAction(b);
+        return;
+      }
+      case 'fan': {
+        const gap = 0.25;
+        while (act.n < a.bursts && act.t >= act.n * gap) {
+          const base = Phaser.Math.Angle.Between(b.x, b.y, this.player.x, this.player.y);
+          const spread = Phaser.Math.DegToRad(a.spread);
+          for (let i = 0; i < a.count; i++) {
+            const k = a.count > 1 ? i / (a.count - 1) - 0.5 : 0;
+            this.fireOrb(b.x, b.y, base + k * spread, a.speed, a.dmg, a.color);
+          }
+          act.n += 1;
+        }
+        if (act.t >= a.bursts * gap + 0.2) this.endBossAction(b);
+        return;
+      }
+      case 'dash': {
+        const dashTime = a.dist / a.speed;
+        if (act.t < a.warn) return;
+        if (act.t < a.warn + dashTime) {
+          if (!act.going) {
+            act.going = true;
+            b.dmg = a.dmg;
+            this.physics.velocityFromRotation(act.ang, a.speed, b.body.velocity);
+          }
+          return;
+        }
+        b.setVelocity(0, 0);
+        b.dmg = b.def.dmg;
+        this.endBossAction(b, 0.3);
+        return;
+      }
+      case 'meteor': {
+        // 魔王站著施法，等隕石落完
+        if (act.t >= a.warn + a.count * 0.15) this.endBossAction(b);
+        return;
+      }
+      default:
+        this.endBossAction(b);
+    }
+  }
+
+  fireOrb(x, y, ang, speed, dmg, color) {
+    const o = this.ebullets.get(x, y, 'orb');
+    if (!o) return;
+    o.enableBody(true, x, y, true, true);
+    o.setTexture('orb').setTint(color).setDepth(9);
+    o.body.setCircle(8, o.width / 2 - 8, o.height / 2 - 8);
+    this.physics.velocityFromRotation(ang, speed, o.body.velocity);
+    o.dmg = dmg;
+  }
+
+  // 招式警示：紅圈（時間到時圈內受傷）或紅線（衝撞路線），越接近發動顏色越深
+  addHazard(h) {
+    h.max = h.t;
+    this.hazards.push(h);
+  }
+
+  updateHazards(dt) {
+    this.ebullets.children.iterate(o => {
+      if (o.active && !ARENA.contains(o.x, o.y)) o.disableBody(true, true);
+    });
+    const g = this.hazardGfx;
+    g.clear();
+    if (!this.hazards.length) return;
+    const p = this.player;
+    this.hazards = this.hazards.filter(h => {
+      h.t -= dt;
+      if (h.t <= 0) {
+        if (h.type === 'circle') {
+          this.boomFx(h.x, h.y, h.r, h.boom ?? 0xffffff);
+          if (h.dmg && (p.x - h.x) ** 2 + (p.y - h.y) ** 2 <= h.r * h.r) this.hurtPlayer(h.dmg);
+        }
+        return false;
+      }
+      const k = 1 - h.t / h.max;
+      const blink = Math.floor(h.t * 12) % 2 ? 1 : 0.5;
+      g.fillStyle(0xff3040, 0.12 + 0.28 * k);
+      g.lineStyle(3, 0xff3040, blink);
+      if (h.type === 'circle') {
+        g.fillCircle(h.x, h.y, h.r);
+        g.strokeCircle(h.x, h.y, h.r);
+        // 內圈慢慢變大，到外圈時就發動
+        g.fillStyle(0xff3040, 0.25);
+        g.fillCircle(h.x, h.y, h.r * k);
+      } else {
+        const c = Math.cos(h.ang);
+        const s = Math.sin(h.ang);
+        const hw = h.w / 2;
+        const pts = [
+          { x: h.x - s * hw, y: h.y + c * hw },
+          { x: h.x + c * h.len - s * hw, y: h.y + s * h.len + c * hw },
+          { x: h.x + c * h.len + s * hw, y: h.y + s * h.len - c * hw },
+          { x: h.x + s * hw, y: h.y - c * hw },
+        ];
+        g.fillPoints(pts, true);
+        g.strokePoints(pts, true);
+      }
+      return true;
+    });
+  }
+
+  // 打倒魔王：場上小怪全倒、魔王招式消失，過一下子這一波結束
+  onBossKilled(x, y) {
+    this.boss = null;
+    this.bossOutro = BOSS_OUTRO_TIME;
+    this.clearBossAttacks();
+    this.warns.children.iterate(w => { if (w.active) w.setActive(false).setVisible(false); });
+    this.enemies.children.iterate(e => { if (e.active) this.killEnemy(e); });
+    this.cameras.main.flash(400, 255, 240, 180);
+    this.cameras.main.shake(500, 0.012);
+    this.boomFx(x, y, 160, 0xffd84d);
+    this.hint.setText('🎉 打倒魔王了！').setVisible(true).setAlpha(1);
+    this.hintTime = BOSS_OUTRO_TIME;
   }
 
   updateWeapons(dt) {
@@ -333,7 +620,8 @@ export class ArenaScene extends Phaser.Scene {
     let best = null;
     let bestD = range * range;
     this.enemies.children.iterate(e => {
-      if (!e.active) return;
+      // 跳在半空中的魔王打不到
+      if (!e.active || !e.body.enable) return;
       const dx = e.x - x;
       const dy = e.y - y;
       const d = dx * dx + dy * dy;
@@ -390,7 +678,8 @@ export class ArenaScene extends Phaser.Scene {
     e.hp -= b.dmg;
     e.setTintFill(0xffffff);
     e.flash = 0.06;
-    const kb = b.knockback;
+    // 魔王太重，推不動
+    const kb = e.boss ? 0 : b.knockback;
     const a = Math.atan2(b.body.velocity.y, b.body.velocity.x);
     e.x += Math.cos(a) * kb;
     e.y += Math.sin(a) * kb;
@@ -402,13 +691,11 @@ export class ArenaScene extends Phaser.Scene {
 
   // 火箭爆炸：半徑內每隻敵人都吃滿傷害，並從爆炸中心往外推
   explode(x, y, radius, dmg, kb, color) {
-    const fx = this.add.image(x, y, 'boom').setTint(color).setDepth(9)
-      .setScale(radius / 64 * 0.4).setAlpha(0.9);
-    this.tweens.add({ targets: fx, scale: radius / 64, alpha: 0, duration: 260, onComplete: () => fx.destroy() });
+    this.boomFx(x, y, radius, color);
     this.cameras.main.shake(80, 0.003);
     const hit = [];
     this.enemies.children.iterate(e => {
-      if (!e.active) return;
+      if (!e.active || !e.body.enable) return;
       const dx = e.x - x;
       const dy = e.y - y;
       // 敵人身體碰到爆炸圈就算
@@ -416,35 +703,61 @@ export class ArenaScene extends Phaser.Scene {
       if (dx * dx + dy * dy <= reach * reach) hit.push(e);
     });
     for (const e of hit) {
+      // 打倒魔王時其他小怪會一起倒下，已經倒下的就跳過
+      if (!e.active) continue;
       e.hp -= dmg;
       e.setTintFill(0xffffff);
       e.flash = 0.06;
       const a = Math.atan2(e.y - y, e.x - x);
-      e.x += Math.cos(a) * kb;
-      e.y += Math.sin(a) * kb;
+      const push = e.boss ? 0 : kb;
+      e.x += Math.cos(a) * push;
+      e.y += Math.sin(a) * push;
       this.showFloat(e.x, e.y - 18, String(dmg), '#ffb84d');
       if (e.hp <= 0) this.killEnemy(e);
     }
   }
 
+  boomFx(x, y, radius, color) {
+    const fx = this.add.image(x, y, 'boom').setTint(color).setDepth(9)
+      .setScale(radius / 64 * 0.4).setAlpha(0.9);
+    this.tweens.add({ targets: fx, scale: radius / 64, alpha: 0, duration: 260, onComplete: () => fx.destroy() });
+  }
+
   killEnemy(e) {
     const { x, y, drop } = e;
+    const wasBoss = e.boss;
     e.disableBody(true, true);
+    // 魔王掉的材料撒得比較開
+    const spread = wasBoss ? 70 : 12;
     for (let i = 0; i < drop; i++) {
-      const m = this.mats.get(x + Phaser.Math.Between(-12, 12), y + Phaser.Math.Between(-12, 12), 'mat');
+      const m = this.mats.get(x + Phaser.Math.Between(-spread, spread), y + Phaser.Math.Between(-spread, spread), 'mat');
       if (!m) break;
       m.setActive(true).setVisible(true).setDepth(3);
       m.homing = false;
     }
+    if (wasBoss) this.onBossKilled(x, y);
   }
 
   onPlayerTouch(p, e) {
-    if (this.invuln > 0 || !e.active || !this.running) return;
-    const dmg = e.dmg * (1 - armorReduction(this.run.stats.armor));
+    if (!e.active || !e.body.enable) return;
+    this.hurtPlayer(e.dmg);
+  }
+
+  // 玩家受傷（敵人碰撞、魔王子彈、魔王招式），護甲減傷，之後短暫無敵
+  hurtPlayer(rawDmg) {
+    if (this.invuln > 0 || !this.running) return false;
+    const p = this.player;
+    const dmg = rawDmg * (1 - armorReduction(this.run.stats.armor));
     this.run.hp -= dmg;
     this.invuln = INVULN_TIME;
     this.cameras.main.shake(120, 0.006);
     this.showFloat(p.x, p.y - 30, `-${Math.round(dmg * 10) / 10}`, '#ff6b6b');
+    return true;
+  }
+
+  onOrbHit(p, o) {
+    if (!o.active) return;
+    if (this.hurtPlayer(o.dmg)) o.disableBody(true, true);
   }
 
   updateMats(dt) {
@@ -495,6 +808,21 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   pushHud() {
-    this.hooks.onHud(Math.max(0, Math.ceil(this.waveTime - this.elapsed)));
+    if (!this.bossId) {
+      this.hooks.onHud(Math.max(0, Math.ceil(this.waveTime - this.elapsed)), null);
+      return;
+    }
+    const def = BOSSES[this.bossId];
+    const b = this.boss;
+    const age = b ? b.age : 0;
+    this.hooks.onHud(0, {
+      icon: def.icon,
+      name: def.name,
+      hp: b ? Math.max(0, Math.ceil(b.hp)) : (this.bossOutro > 0 ? 0 : def.hp),
+      maxHp: def.hp,
+      enraged: !!b?.enraged,
+      defeated: this.bossOutro > 0,
+      enrageIn: Math.max(0, Math.ceil(BOSS_ENRAGE_TIME - age)),
+    });
   }
 }

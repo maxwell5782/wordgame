@@ -40,6 +40,8 @@ html, body {
 }
 
 #game { position: fixed; inset: 0; }
+/* 看不見的密碼欄位，只用來讓電腦關掉中文輸入法（見 src/input/keyboard.js） */
+#key-sink { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; pointer-events: none; }
 
 /* ---------- HUD ---------- */
 #hud {
@@ -224,6 +226,10 @@ button.chip { cursor: pointer; }
 .gear-card .desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .gear-card.locked { opacity: .5; border-style: dashed; }
 .gear-body { flex: 1; min-width: 0; }
+.boss-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.boss-img { width: 72px; image-rendering: pixelated; flex: none; }
+.boss-attacks { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.boss-attacks li { margin-top: 2px; }
 .tier-table { width: 100%; margin-top: 6px; border-collapse: collapse; font-size: 12px; }
 .tier-table th { text-align: left; color: var(--muted); font-weight: 700; padding: 2px 4px; }
 .tier-table td { padding: 2px 4px; border-top: 1px solid var(--line); }
@@ -333,5 +339,10 @@ button.chip { cursor: pointer; }
 }
 .bar span { z-index: 1; }
 #timer-text { font-family: var(--pixel-font); letter-spacing: .05em; }
+/* 魔王血條：在波數和倒數下面，比玩家血條寬 */
+#boss-bar { width: min(46vw, 440px); margin-top: 4px; }
+#boss-name { font-size: clamp(12px, 2.6vh, 16px); color: #ffd84d; margin-bottom: 2px; }
+.bar.boss .fill { background: linear-gradient(#ffb0e0 0 30%, #d0408a 30% 75%, #7a1f55 75%); }
+.bar.boss span { justify-content: center; padding-left: 0; font-family: var(--pixel-font); }
 
 #hud .mats, .mats.big { font-family: var(--pixel-font); }
