@@ -13,6 +13,7 @@ const ASSETS = [
   'icons/icon.svg',
   'lib/phaser-arcade-physics.min.js',
   'src/art/pixel.js',
+  'src/audio.js',
   'src/data/bosses.js',
   'src/data/enemies.js',
   'src/data/items.js',
