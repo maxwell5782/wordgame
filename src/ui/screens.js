@@ -7,6 +7,7 @@ import { SPRITES, spriteDataUrl } from '../art/pixel.js';
 import { RARITY, STATS, START_WEAPONS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
 import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, getSavedStartWeapon, saveStartWeapon, hasSeenGear } from '../progress.js';
 import { speak, canSpeak, getEnglishVoices, getVoice, isAutoVoice, setVoice, onVoicesChanged } from '../speech.js';
+import { getAudioSettings, setAudioSettings, sfx } from '../audio.js';
 import { el, mount, unmount, shuffle } from './dom.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
 
@@ -53,6 +54,7 @@ export function showMenu({ onStart }) {
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, `⚔️ 武器道具圖鑑 ${gearSeenCount()}/${GEAR_TOTAL}`),
         el('button', { class: `btn ${review ? 'review-btn' : ''}`, type: 'button', onclick: () => showReview({ onClose: render }) }, `📝 複習單字 ${review}`),
         canSpeak() ? el('button', { class: 'btn', type: 'button', onclick: showVoices }, '🔊 發音') : null,
+        el('button', { class: 'btn', type: 'button', onclick: showSound }, '🎵 音樂音效'),
       ),
       el('p', { class: 'help' }, '移動：按住畫面任意處拖曳（電腦也可以用 WASD 或方向鍵）。武器會自動攻擊。'),
     ));
@@ -267,6 +269,42 @@ export function showReview({ onClose } = {}) {
   mount(el('div', { class: 'screen modal' }, card), 'review');
 }
 
+// 音樂、音效的音量和靜音（存在這台裝置上）
+export function showSound() {
+  const card = el('div', { class: 'card sound' });
+  const close = () => unmount('sound');
+  const slider = (key, label, test) => {
+    const input = el('input', { type: 'range', min: 0, max: 100, step: 5, value: Math.round(getAudioSettings()[key] * 100) });
+    const num = el('span', { class: 'vol-num' }, `${input.value}%`);
+    input.addEventListener('input', () => {
+      setAudioSettings({ [key]: input.value / 100, muted: false });
+      num.textContent = `${input.value}%`;
+      muteBtn.textContent = '🔇 全部靜音';
+    });
+    if (test) input.addEventListener('change', test);
+    return el('label', { class: 'vol-row' }, el('span', {}, label), input, num);
+  };
+  const muteBtn = el('button', {
+    class: 'btn', type: 'button',
+    onclick: () => {
+      const muted = !getAudioSettings().muted;
+      setAudioSettings({ muted });
+      muteBtn.textContent = muted ? '🔈 打開聲音' : '🔇 全部靜音';
+    },
+  }, getAudioSettings().muted ? '🔈 打開聲音' : '🔇 全部靜音');
+  card.append(
+    el('div', { class: 'shop-head' },
+      el('div', { class: 'title' }, '🎵 音樂音效'),
+      el('button', { class: 'btn', type: 'button', onclick: close }, '關閉'),
+    ),
+    slider('music', '🎵 音樂'),
+    slider('sfx', '💥 音效', () => sfx('buy')),
+    muteBtn,
+    el('p', { class: 'help' }, '唸英文單字的時候，音樂和音效會自動變小聲。單字發音的大小聲跟著裝置音量。'),
+  );
+  mount(el('div', { class: 'screen modal' }, card), 'sound');
+}
+
 // 選擇唸單字的聲音：每台裝置內建的聲音不同，有些唸起來很怪，可以在這裡換
 const VOICE_SAMPLES = ['camera', 'banana', 'elephant', 'computer'];
 
@@ -383,6 +421,7 @@ export function showPause({ onResume, onQuit }) {
       el('div', { class: 'title' }, '⏸ 暫停中'),
       el('button', { class: 'btn primary huge', type: 'button', onclick: () => { unmount('pause'); onResume(); } }, '▶ 繼續'),
       el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, '📚 圖鑑'),
+      el('button', { class: 'btn', type: 'button', onclick: showSound }, '🎵 音樂音效'),
       quitButton(() => { unmount('pause'); onQuit(); }),
     ));
   mount(screen, 'pause');

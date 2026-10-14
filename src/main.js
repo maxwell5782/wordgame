@@ -7,6 +7,7 @@ import { showMenu, showLevelUp, showPause, showResults, showRevive, canRevive, i
 import { markGearSeen } from './progress.js';
 import { openQuiz } from './ui/quiz.js';
 import { canSpeak } from './speech.js';
+import { playMusic, stopMusic, sfx, duck, unduck } from './audio.js';
 import { clearUi, unmount } from './ui/dom.js';
 
 const game = new Phaser.Game({
@@ -16,6 +17,8 @@ const game = new Phaser.Game({
   height: GAME_H,
   backgroundColor: '#0e1124',
   physics: { default: 'arcade', arcade: { debug: false } },
+  // 音樂音效自己用 Web Audio 合成（src/audio.js），不用 Phaser 的
+  audio: { noAudio: true },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   input: { activePointers: 3 },
   scene: [BootScene, ArenaScene],
@@ -34,6 +37,8 @@ const hooks = {
       return;
     }
     hud.hide();
+    sfx('waveClear');
+    playMusic('shop');
     while (run.pendingLevels > 0) {
       await showLevelUp(run);
       run.pendingLevels -= 1;
@@ -73,6 +78,8 @@ async function startRun(topic, wordLevel, startWeapon) {
   clearUi();
   game.scene.stop('arena');
   run = newRun(topic, wordLevel, startWeapon);
+  resetDucks();
+  playMusic('shop');
   for (const w of run.weapons) markGearSeen('weapon', w.id);
   await waveQuiz();
   hud.show();
@@ -81,6 +88,8 @@ async function startRun(topic, wordLevel, startWeapon) {
 
 function finish(won) {
   hud.hide();
+  stopMusic();
+  sfx(won ? 'win' : 'lose');
   showResults(run, won, {
     onAgain: () => startRun(run.topic, run.wordLevel, run.startWeapon),
     onMenu: goMenu,
@@ -89,11 +98,19 @@ function finish(won) {
 
 let resume = null;
 
+// 畫面被整個清掉時，答題／暫停造成的「音樂變小聲」也要一起恢復
+function resetDucks() {
+  unduck('quiz');
+  unduck('pause');
+}
+
 function goMenu() {
   resume = null;
   game.scene.stop('arena');
   hud.hide();
   clearUi();
+  resetDucks();
+  playMusic('menu');
   showMenu({ onStart: startRun });
 }
 
@@ -101,7 +118,8 @@ function pause() {
   const a = arena();
   if (!a || !a.scene.isActive() || !a.running || a.paused || isPauseOpen()) return;
   a.setPaused(true);
-  resume = () => { resume = null; a.setPaused(false); };
+  duck('pause', 0.3, 0.3);
+  resume = () => { resume = null; unduck('pause'); a.setPaused(false); };
   showPause({ onResume: () => resume?.(), onQuit: goMenu });
 }
 
@@ -109,13 +127,19 @@ document.getElementById('pause-btn').addEventListener('click', pause);
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 window.addEventListener('keydown', e => {
   if (e.key !== 'Escape' && e.key !== 'p') return;
-  // Esc：先關圖鑑，再從暫停回到遊戲，遊戲中則打開暫停選單
-  if (document.querySelector('#ui [data-layer="codex"]')) unmount('codex');
+  // Esc：先關音量設定或圖鑑，再從暫停回到遊戲，遊戲中則打開暫停選單
+  if (document.querySelector('#ui [data-layer="sound"]')) unmount('sound');
+  else if (document.querySelector('#ui [data-layer="codex"]')) unmount('codex');
   else if (isPauseOpen()) { unmount('pause'); resume?.(); }
   else pause();
 });
 
 game.events.once('boot-ready', goMenu);
+
+// 按按鈕的小音效
+document.addEventListener('click', e => {
+  if (e.target.closest?.('button')) sfx('click');
+});
 
 // 方便在瀏覽器主控台除錯
 window.wordgame = { game, get run() { return run; } };

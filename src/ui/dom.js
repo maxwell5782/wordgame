@@ -1,4 +1,6 @@
 // 簡單的 DOM 小工具
+import { sfx } from '../audio.js';
+
 export const uiRoot = () => document.getElementById('ui');
 
 export function el(tag, props = {}, ...children) {
@@ -49,6 +51,8 @@ export function sample(arr, n) {
 }
 
 export function toast(text, kind = '') {
+  if (kind === 'good') sfx('buy');
+  else if (kind === 'bad') sfx('error');
   const t = el('div', { class: `toast ${kind}` }, text);
   document.body.append(t);
   setTimeout(() => t.classList.add('out'), 1400);

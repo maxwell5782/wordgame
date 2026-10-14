@@ -1,4 +1,6 @@
 // 用瀏覽器內建語音唸英文單字（免費，不需要錄音檔）
+import { speechStarted, speechEnded } from './audio.js';
+
 // 每台裝置內建的聲音不一樣：自動挑最自然的英文聲音，也可以在主選單「🔊 發音」自己選。
 const VOICE_KEY = 'wordgame.voice';
 let voice = null;
@@ -67,6 +69,9 @@ export function speak(text) {
     u.lang = voice?.lang?.replace('_', '-') || 'en-US';
     if (voice) u.voice = voice;
     u.rate = 0.9; // 太慢會讓部分語音把字拉長變形
+    // 唸的時候音樂和音效變小聲
+    const id = speechStarted();
+    u.onend = u.onerror = () => speechEnded(id);
     const busy = speechSynthesis.speaking || speechSynthesis.pending;
     if (busy) speechSynthesis.cancel();
     // Chrome 剛 cancel 完馬上 speak，開頭的音常被吃掉（camera 變成 "mera"），稍等一下再唸

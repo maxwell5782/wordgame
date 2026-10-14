@@ -346,3 +346,9 @@ button.chip { cursor: pointer; }
 .bar.boss span { justify-content: center; padding-left: 0; font-family: var(--pixel-font); }
 
 #hud .mats, .mats.big { font-family: var(--pixel-font); }
+
+/* 音樂音效設定 */
+.card.sound { display: flex; flex-direction: column; gap: 14px; min-width: min(420px, 92vw); }
+.vol-row { display: grid; grid-template-columns: 5.5em 1fr 3.5em; align-items: center; gap: 10px; font-size: 18px; }
+.vol-row input[type="range"] { width: 100%; accent-color: #ffd84d; height: 28px; }
+.vol-num { text-align: right; font-variant-numeric: tabular-nums; }
