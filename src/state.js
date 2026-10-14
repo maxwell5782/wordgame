@@ -49,8 +49,11 @@ export function waveDuration(wave) {
   return Math.min(60, 20 + 5 * (wave - 1));
 }
 
+// 第 1 級只要 10 經驗：第一波大約出 17 隻怪，就算沒全清也能升一級
+export const FIRST_LEVEL_XP = 10;
+
 export function xpToNext(level) {
-  return (level + 3) ** 2;
+  return level === 1 ? FIRST_LEVEL_XP : (level + 3) ** 2;
 }
 
 // 材料同時是經驗值與金錢。回傳這次升了幾級。
