@@ -62,11 +62,13 @@ function weaponDesc(w, run) {
   return [...parts, ...weaponTraits(s)].join(' · ');
 }
 
-// 買武器時：有同名同階就直接合成（不佔格子），有空位就放進去，都不行就要替換
-function weaponBuyMode(run, id, tier) {
-  if (tier < 3 && run.weapons.some(w => w.id === id && w.tier === tier)) return 'merge';
-  if (run.weapons.length < MAX_WEAPONS) return 'add';
-  return 'replace';
+// 買武器的方式：有空位就能放進去；有同名同階也能直接合成（不佔格子），兩者都行時讓玩家選；
+// 都不行就要替換
+function weaponBuyModes(run, id, tier) {
+  const modes = [];
+  if (run.weapons.length < MAX_WEAPONS) modes.push('add');
+  if (tier < 3 && run.weapons.some(w => w.id === id && w.tier === tier)) modes.push('merge');
+  return modes.length ? modes : ['replace'];
 }
 
 function sellPrice(w, run) {
@@ -88,14 +90,13 @@ export function openShop(run, onNext, onQuit) {
     slot.locked = false;
   };
 
-  const buy = i => {
+  const buy = (i, mode) => {
     const slot = run.shop.slots[i];
     const o = slot.offer;
     const price = offerPrice(o, run.wave);
     if (slot.sold || run.materials < price) return;
     replacing = null;
     if (o.kind === 'weapon') {
-      const mode = weaponBuyMode(run, o.id, o.tier);
       if (mode === 'replace') {
         replacing = i;
         render();
@@ -179,8 +180,8 @@ export function openShop(run, onNext, onQuit) {
     const price = offerPrice(o, run.wave);
     const isWeapon = o.kind === 'weapon';
     const def = isWeapon ? WEAPONS[o.id] : findItem(o.id);
-    const mode = isWeapon ? weaponBuyMode(run, o.id, o.tier) : null;
-    const hint = mode === 'merge' ? '合成 ' : mode === 'replace' ? '替換 ' : '';
+    const modes = isWeapon ? weaponBuyModes(run, o.id, o.tier) : ['item'];
+    const label = { add: '買', merge: '合成', replace: '替換', item: '' };
     return el('div', { class: `offer ${RARITY[o.tier].css} ${replacing === i ? 'picking' : ''}` },
       el('button', {
         class: `lock ${slot.locked ? 'on' : ''}`, type: 'button', 'aria-label': '鎖定',
@@ -190,9 +191,9 @@ export function openShop(run, onNext, onQuit) {
       el('div', { class: 'name' }, def.name),
       el('div', { class: 'rarity' }, `${RARITY[o.tier].name}${isWeapon ? '武器' : '道具'}`),
       el('div', { class: 'desc' }, isWeapon ? weaponDesc(o, run) : itemDesc(def)),
-      el('button', {
-        class: 'btn buy', type: 'button', disabled: run.materials < price || busy, onclick: () => buy(i),
-      }, `${hint}💎 ${price}`),
+      el('div', { class: 'buy-row' }, modes.map(mode => el('button', {
+        class: 'btn buy', type: 'button', disabled: run.materials < price || busy, onclick: () => buy(i, mode),
+      }, `${label[mode] ? label[mode] + ' ' : ''}💎 ${price}`))),
     );
   }
 

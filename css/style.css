@@ -150,7 +150,8 @@ button.chip { cursor: pointer; }
 .offer .name { font-weight: 800; font-size: 16px; }
 .offer .rarity { font-size: 12px; color: var(--rc); font-weight: 700; }
 .offer .desc { font-size: 12px; color: var(--muted); min-height: 2.6em; }
-.offer .buy { width: 100%; margin-top: auto; }
+.offer .buy-row { display: flex; gap: 6px; width: 100%; margin-top: auto; }
+.offer .buy { flex: 1; min-width: 0; }
 .offer.sold { justify-content: center; opacity: .5; min-height: 120px; }
 .offer.pickable { cursor: pointer; }
 .offer.pickable .desc { color: var(--text); font-size: 15px; font-weight: 700; }
