@@ -2,10 +2,11 @@
 import { WORDS, TOPICS, ALL_TOPICS, wordsForTopic, findWord } from '../data/words.js';
 import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, itemDesc } from '../data/items.js';
-import { RARITY, STATS, MAX_WAVES, applyEffects, formatStat } from '../state.js';
+import { RARITY, STATS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
 import { getCollection, getReviewWords, getSavedTopic, saveTopic, hasSeenGear } from '../progress.js';
 import { speak } from '../speech.js';
 import { el, mount, unmount } from './dom.js';
+import { DIFFICULTY, openQuiz } from './quiz.js';
 
 export function showMenu({ onStart }) {
   let topic = getSavedTopic();
@@ -205,6 +206,38 @@ export function showPause({ onResume, onQuit }) {
 
 export function isPauseOpen() {
   return !!document.querySelector('#ui [data-layer="pause"]');
+}
+
+export function canRevive(run) {
+  return run.revives < MAX_REVIVES;
+}
+
+// 倒下時：選難度答一題，答對就接關（難度越高回越多血）。回傳 Promise，答對時給回復比例，否則 0。
+export function showRevive(run) {
+  return new Promise(resolve => {
+    const left = MAX_REVIVES - run.revives;
+    const pick = async key => {
+      unmount('revive');
+      run.revives += 1;
+      const pct = REVIVE_HP[key];
+      const correct = await openQuiz(key, run, {
+        resultNote: ok => ok ? `接關成功！回復 ${Math.round(pct * 100)}% 生命，無敵 ${REVIVE_INVULN} 秒` : '這次沒有接關，這個字會放進複習清單。',
+      });
+      resolve(correct ? pct : 0);
+    };
+    const screen = el('div', { class: 'screen modal' },
+      el('div', { class: 'card revive' },
+        el('div', { class: 'title' }, '💥 你倒下了！'),
+        el('p', { class: 'help' }, `答對一題英文就能接關（這局還剩 ${left} 次）。題目越難，回越多血。`),
+        el('div', { class: 'reroll-btns' }, Object.entries(DIFFICULTY).map(([key, d]) =>
+          el('button', { class: `btn diff d-${key}`, type: 'button', onclick: () => pick(key) },
+            el('b', {}, d.name),
+            el('small', {}, d.desc),
+            el('small', {}, `回復 ${Math.round(REVIVE_HP[key] * 100)}% 生命`)))),
+        el('button', { class: 'btn', type: 'button', onclick: () => { unmount('revive'); resolve(0); } }, '放棄，看結算'),
+      ));
+    mount(screen, 'revive');
+  });
 }
 
 function wordChips(list, kind) {

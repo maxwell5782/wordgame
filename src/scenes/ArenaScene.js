@@ -1,6 +1,6 @@
 import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
-import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT } from '../state.js';
+import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT, REVIVE_INVULN, REVIVE_CLEAR_RADIUS } from '../state.js';
 import { Joystick } from '../input/joystick.js';
 
 export const GAME_W = 1280;
@@ -139,6 +139,27 @@ export class ArenaScene extends Phaser.Scene {
     this.player.setTint(0x555555);
     this.pushHud();
     this.time.delayedCall(900, () => this.hooks.onDeath());
+  }
+
+  // 答題接關：回血、清掉身邊的怪、短暫無敵，從倒下的地方繼續這一波
+  revive(pct) {
+    const run = this.run;
+    run.hp = Math.max(1, Math.round(run.stats.maxHp * pct));
+    const px = this.player.x;
+    const py = this.player.y;
+    const r2 = REVIVE_CLEAR_RADIUS * REVIVE_CLEAR_RADIUS;
+    this.enemies.children.iterate(e => {
+      if (e.active && (e.x - px) ** 2 + (e.y - py) ** 2 <= r2) e.disableBody(true, true);
+    });
+    this.invuln = REVIVE_INVULN;
+    this.player.clearTint().setAlpha(1);
+    this.joy.reset();
+    this.running = true;
+    this.paused = false;
+    this.physics.resume();
+    this.cameras.main.flash(250, 255, 255, 255);
+    this.showFloat(px, py - 40, '接關！', '#7dff9a');
+    this.pushHud();
   }
 
   refreshWeapons() {

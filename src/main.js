@@ -3,7 +3,7 @@ import { ArenaScene, GAME_W, GAME_H } from './scenes/ArenaScene.js';
 import { newRun, MAX_WAVES } from './state.js';
 import { hud } from './ui/hud.js';
 import { openShop } from './ui/shop.js';
-import { showMenu, showLevelUp, showPause, showResults, isPauseOpen } from './ui/screens.js';
+import { showMenu, showLevelUp, showPause, showResults, showRevive, canRevive, isPauseOpen } from './ui/screens.js';
 import { markGearSeen } from './progress.js';
 import { clearUi, unmount } from './ui/dom.js';
 
@@ -42,7 +42,16 @@ const hooks = {
       arena().nextWave();
     }, goMenu);
   },
-  onDeath() {
+  async onDeath() {
+    if (canRevive(run)) {
+      hud.hide();
+      const pct = await showRevive(run);
+      if (pct > 0) {
+        hud.show();
+        arena().revive(pct);
+        return;
+      }
+    }
     finish(false);
   },
 };

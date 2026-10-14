@@ -221,6 +221,8 @@ button.chip { cursor: pointer; }
 
 .pause { display: grid; gap: 12px; width: min(360px, 100%); text-align: center; }
 .levelup { text-align: center; }
+.revive { display: grid; gap: 10px; width: min(560px, 100%); text-align: center; }
+.revive .reroll-btns { margin-top: 0; }
 
 /* 手機直放時提示轉橫 */
 #rotate-hint { display: none; }
