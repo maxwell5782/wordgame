@@ -1,5 +1,5 @@
 // 每波結束後的商店：買武器和道具、鎖定商品、答題重骰。
-import { WEAPONS, WEAPON_IDS, MAX_WEAPONS, weaponStats, weaponBaseCost, weaponTraits } from '../data/weapons.js';
+import { WEAPONS, WEAPON_IDS, MAX_WEAPONS, weaponStats, weaponBaseCost, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, ITEM_COST, findItem, itemDesc } from '../data/items.js';
 import { RARITY, STATS, RULES, applyEffects, priceForWave, statDetail } from '../state.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
@@ -57,9 +57,7 @@ function rerollCost(run) {
 function weaponDesc(w, run) {
   const s = weaponStats(w, run.stats);
   const parts = [`傷害 ${s.damage}`, `每 ${s.cooldown.toFixed(2)} 秒`];
-  if (s.pellets > 1) parts.push(`${s.pellets} 發`);
-  if (s.pierce > 0) parts.push(`穿透 ${s.pierce}`);
-  return [...parts, ...weaponTraits(s)].join(' · ');
+  return [...parts, ...weaponTierExtras(s), ...weaponTraits(s)].join(' · ');
 }
 
 // 買武器時：有同名同階就直接合成（不佔格子），有空位就放進去，都不行就要替換
