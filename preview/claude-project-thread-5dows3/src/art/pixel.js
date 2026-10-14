@@ -217,6 +217,21 @@ export const SPRITES = {
       'wwwwww..',
     ]],
   },
+  // 出怪警示
+  warn: {
+    pal: { k: '#5a0d1c', r: '#ff4d5e', w: '#ffb3bd' },
+    frames: [[
+      'kk.....kk',
+      'kwk...kwk',
+      '.krk.krk.',
+      '..krkrk..',
+      '...krk...',
+      '..krkrk..',
+      '.krk.krk.',
+      'krk...krk',
+      'kk.....kk',
+    ]],
+  },
   rocket: {
     pal: { w: '#ffffff', y: '#fff0a0' },
     frames: [[
@@ -247,6 +262,34 @@ export function makePixelTexture(scene, key, def) {
     });
     tex.add(i, 0, i * fw * PX, 0, fw * PX, fh * PX);
   });
+  tex.refresh();
+  tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+}
+
+// 像素圓（爆炸、搖桿）：size 是貼圖邊長，fill／ring 是 [顏色, 透明度]，ring 寬 ringW 格
+export function makePixelDisc(scene, key, size, fill, ring, ringW = 1) {
+  const n = Math.ceil(size / PX);
+  const small = document.createElement('canvas');
+  small.width = n;
+  small.height = n;
+  const sctx = small.getContext('2d');
+  const c = (n - 1) / 2;
+  const r = n / 2;
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const d = Math.hypot(x - c, y - c);
+      if (d > r - 0.5) continue;
+      const style = d > r - 0.5 - ringW ? ring : fill;
+      if (!style) continue;
+      sctx.globalAlpha = style[1];
+      sctx.fillStyle = style[0];
+      sctx.fillRect(x, y, 1, 1);
+    }
+  }
+  const tex = scene.textures.createCanvas(key, size, size);
+  const ctx = tex.getContext();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(small, 0, 0, n * PX, n * PX);
   tex.refresh();
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
 }

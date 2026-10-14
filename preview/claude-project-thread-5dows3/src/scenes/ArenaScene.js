@@ -35,7 +35,7 @@ export class ArenaScene extends Phaser.Scene {
     this.floats = [];
     for (let i = 0; i < 40; i++) {
       this.floats.push(this.add.text(0, 0, '', {
-        fontFamily: '"Pixelify Sans", system-ui, sans-serif', fontSize: '22px', fontStyle: 'bold',
+        fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold',
         color: '#ffffff', stroke: '#1b1f3a', strokeThickness: 5,
       }).setOrigin(0.5).setDepth(50).setActive(false).setVisible(false));
     }
