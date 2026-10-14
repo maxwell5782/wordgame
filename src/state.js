@@ -68,8 +68,8 @@ export function applyEffects(run, effects) {
   for (const [k, v] of Object.entries(effects)) run.stats[k] += v;
 }
 
-// 玩家基礎移動速度（像素/秒）；改這裡時記得一起看敵人速度
-export const BASE_PLAYER_SPEED = 330;
+// 玩家基礎移動速度（像素/秒），只比第 10 波的衝衝鬼（200×1.18≈236）快一點；改這裡時記得一起看敵人速度
+export const BASE_PLAYER_SPEED = 250;
 
 export function playerSpeed(stats) {
   return Math.max(BASE_PLAYER_SPEED * 0.4, BASE_PLAYER_SPEED * (1 + stats.speed / 100));
