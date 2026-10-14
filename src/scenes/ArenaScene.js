@@ -2,6 +2,7 @@ import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
 import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT, REVIVE_INVULN, REVIVE_CLEAR_RADIUS } from '../state.js';
 import { Joystick } from '../input/joystick.js';
+import { KeyboardMove } from '../input/keyboard.js';
 import { makeArenaTexture } from '../art/pixel.js';
 
 export const GAME_W = 1280;
@@ -46,14 +47,14 @@ export class ArenaScene extends Phaser.Scene {
     // 敵人之間互相推開，不會全部疊成一團
     this.physics.add.collider(this.enemies, this.enemies);
 
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
+    this.keys = new KeyboardMove();
     this.joy = new Joystick(this);
     this.hint = this.add.text(GAME_W / 2, GAME_H - 80, '', {
       fontFamily: 'system-ui, sans-serif', fontSize: '26px', fontStyle: 'bold',
       color: '#ffffff', stroke: '#000000', strokeThickness: 5, align: 'center',
     }).setOrigin(0.5).setDepth(60);
 
-    this.events.once('shutdown', () => this.joy.destroy());
+    this.events.once('shutdown', () => { this.joy.destroy(); this.keys.destroy(); });
     this.startWave();
   }
 
@@ -200,18 +201,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   updatePlayer(dt) {
-    const k = this.keys;
-    let mx = 0;
-    let my = 0;
-    if (k.A.isDown || k.LEFT.isDown) mx -= 1;
-    if (k.D.isDown || k.RIGHT.isDown) mx += 1;
-    if (k.W.isDown || k.UP.isDown) my -= 1;
-    if (k.S.isDown || k.DOWN.isDown) my += 1;
-    if (mx || my) {
-      const l = Math.hypot(mx, my);
-      mx /= l;
-      my /= l;
-    } else {
+    const k = this.keys.read();
+    let mx = k.x;
+    let my = k.y;
+    if (!mx && !my) {
       mx = this.joy.vec.x;
       my = this.joy.vec.y;
     }
