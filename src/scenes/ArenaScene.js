@@ -673,7 +673,15 @@ export class ArenaScene extends Phaser.Scene {
     this.bullets.children.iterate(b => {
       if (!b.active) return;
       b.life -= dt;
-      if (b.life <= 0 || !ARENA.contains(b.x, b.y)) b.disableBody(true, true);
+      if (b.life <= 0 || !ARENA.contains(b.x, b.y)) {
+        // 火箭飛到最遠或撞到牆也會爆炸
+        if (b.blast > 0) {
+          const x = Phaser.Math.Clamp(b.x, ARENA.x, ARENA.right);
+          const y = Phaser.Math.Clamp(b.y, ARENA.y, ARENA.bottom);
+          this.explode(x, y, b.blast, b.dmg, b.knockback, b.color);
+        }
+        b.disableBody(true, true);
+      }
     });
   }
 
