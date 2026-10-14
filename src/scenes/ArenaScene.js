@@ -220,7 +220,7 @@ export class ArenaScene extends Phaser.Scene {
     // 最後 1 秒不再出怪
     if (this.elapsed < this.waveTime - 1) {
       this.spawnAcc += dt;
-      const interval = Math.max(0.45, 1.8 - wave * 0.13);
+      const interval = Math.max(0.4, 1.6 - wave * 0.12);
       if (this.spawnAcc >= interval) {
         this.spawnAcc -= interval;
         this.queueSpawnGroup();

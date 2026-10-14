@@ -81,5 +81,5 @@ export function armorReduction(armor) {
 }
 
 export function priceForWave(base, wave) {
-  return Math.round(base * (1 + 0.1 * (wave - 1)));
+  return Math.round(base * (1 + 0.15 * (wave - 1)));
 }

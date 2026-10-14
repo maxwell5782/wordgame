@@ -21,7 +21,7 @@ export function pickEnemyType(wave) {
 
 export function enemyScale(wave) {
   return {
-    hp: 1 + 0.3 * (wave - 1),
+    hp: 1 + 0.4 * (wave - 1),
     dmg: Math.floor((wave - 1) / 3),
     speed: 1 + 0.02 * (wave - 1),
   };
