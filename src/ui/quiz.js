@@ -6,6 +6,7 @@
 import { WORDS, wordsForTopic } from '../data/words.js';
 import { pickWord, recordAnswer } from '../progress.js';
 import { speak, canSpeak } from '../speech.js';
+import { sfx, duck, unduck } from '../audio.js';
 import { el, mount, unmount, sample, shuffle } from './dom.js';
 
 export const DIFFICULTY = {
@@ -118,10 +119,15 @@ export function openQuiz(difficulty, run, { reward, resultNote, word: fixedWord,
     const filter = difficulty === 'hard' ? w => w.en.length <= 7 : () => true;
     const word = fixedWord ?? pickWord(run.topic, run.wordLevel, filter);
     const diff = DIFFICULTY[difficulty] ?? OTHER_QUIZ[difficulty];
+    // 答題時音樂放小聲，聽得清楚單字
+    duck('quiz', 0.35);
+    const close = () => { unduck('quiz'); unmount('quiz'); };
 
     const finish = correct => {
       recordAnswer(word, correct, run);
-      speak(word.en);
+      sfx(correct ? 'correct' : 'wrong');
+      // 先讓答對／答錯的提示音響完，再唸單字
+      setTimeout(() => speak(word.en), 450);
       const box = el('div', { class: `quiz-result ${correct ? 'good' : 'bad'}` },
         el('div', { class: 'big' }, correct ? '答對了！🎉' : '再加油！💪'),
         el('div', { class: 'answer' }, el('span', { class: 'emoji' }, word.emoji), ' ', el('b', {}, word.en), ` ＝ ${word.zh}`),
@@ -129,7 +135,7 @@ export function openQuiz(difficulty, run, { reward, resultNote, word: fixedWord,
         el('div', { class: 'note' }, resultNote ? resultNote(correct) : correct
           ? (diff.guarantee ? `重骰保證出現${diff.guarantee === 1 ? '藍裝 🔵' : '紫裝 🟣'}！` : '重骰完成！')
           : '這次是一般重骰，這個字會放進複習清單。'),
-        el('button', { class: 'btn primary', type: 'button', onclick: () => { unmount('quiz'); resolve(correct); } }, '繼續'),
+        el('button', { class: 'btn primary', type: 'button', onclick: () => { close(); resolve(correct); } }, '繼續'),
       );
       card.replaceChildren(box);
     };
@@ -197,7 +203,7 @@ export function openQuiz(difficulty, run, { reward, resultNote, word: fixedWord,
     }
 
     const card = el('div', { class: 'card quiz' },
-      quitLabel ? el('button', { class: 'btn quiz-quit', type: 'button', onclick: () => { unmount('quiz'); resolve(null); } }, quitLabel) : null,
+      quitLabel ? el('button', { class: 'btn quiz-quit', type: 'button', onclick: () => { close(); resolve(null); } }, quitLabel) : null,
       el('div', { class: `quiz-tag d-${difficulty}` }, `${diff.name}題 · ${diff.desc}`),
       reward === null ? null : el('div', { class: 'quiz-reward' }, `🎁 答對：${reward ?? (diff.guarantee ? `重骰保證出現${diff.guarantee === 1 ? '藍裝 🔵' : '紫裝 🟣'}` : '重骰商店')}`),
       body);
