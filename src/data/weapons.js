@@ -8,7 +8,7 @@ export const WEAPONS = {
   },
   shotgun: {
     name: '散彈槍', icon: '💥', desc: '近距離一次射出好幾發，每升一階多 1 發。', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
-    baseCost: 20, damage: 4, cooldown: 1.3, range: 300, bulletSpeed: 850,
+    baseCost: 20, damage: 4, cooldown: 1.45, range: 300, bulletSpeed: 850,
     pellets: 3, spread: 0.55, pierce: 0, knockback: 10,
   },
   knife: {
@@ -19,8 +19,8 @@ export const WEAPONS = {
 };
 
 export const WEAPON_IDS = Object.keys(WEAPONS);
-// 身上最多同時帶 2 把武器，每把各自瞄準、各自冷卻
-export const MAX_WEAPONS = 2;
+// 身上最多同時帶 6 把武器，每把各自瞄準、各自冷卻
+export const MAX_WEAPONS = 6;
 
 const TIER_DMG = [1, 1.6, 2.4, 3.6];
 const TIER_CD = [1, 0.9, 0.8, 0.7];
