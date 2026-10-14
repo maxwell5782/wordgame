@@ -4,7 +4,8 @@ import { newRun, MAX_WAVES } from './state.js';
 import { hud } from './ui/hud.js';
 import { openShop } from './ui/shop.js';
 import { showMenu, showLevelUp, showPause, showResults, isPauseOpen } from './ui/screens.js';
-import { clearUi } from './ui/dom.js';
+import { markGearSeen } from './progress.js';
+import { clearUi, unmount } from './ui/dom.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -39,7 +40,7 @@ const hooks = {
       clearUi();
       hud.show();
       arena().nextWave();
-    });
+    }, goMenu);
   },
   onDeath() {
     finish(false);
@@ -49,6 +50,7 @@ const hooks = {
 function startRun(topic) {
   clearUi();
   run = newRun(topic);
+  for (const w of run.weapons) markGearSeen('weapon', w.id);
   hud.show();
   game.scene.start('arena', { run, hooks });
 }
@@ -61,7 +63,10 @@ function finish(won) {
   });
 }
 
+let resume = null;
+
 function goMenu() {
+  resume = null;
   game.scene.stop('arena');
   hud.hide();
   clearUi();
@@ -72,12 +77,19 @@ function pause() {
   const a = arena();
   if (!a || !a.scene.isActive() || !a.running || a.paused || isPauseOpen()) return;
   a.setPaused(true);
-  showPause({ onResume: () => a.setPaused(false), onQuit: goMenu });
+  resume = () => { resume = null; a.setPaused(false); };
+  showPause({ onResume: () => resume?.(), onQuit: goMenu });
 }
 
 document.getElementById('pause-btn').addEventListener('click', pause);
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-window.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'p') pause(); });
+window.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' && e.key !== 'p') return;
+  // Esc：先關圖鑑，再從暫停回到遊戲，遊戲中則打開暫停選單
+  if (document.querySelector('#ui [data-layer="codex"]')) unmount('codex');
+  else if (isPauseOpen()) { unmount('pause'); resume?.(); }
+  else pause();
+});
 
 game.events.once('boot-ready', goMenu);
 
