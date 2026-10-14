@@ -3,9 +3,9 @@ import { WORDS, TOPICS, ALL_TOPICS, LEVELS, ALL_LEVELS, wordsForTopic, findWord 
 import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, itemDesc } from '../data/items.js';
 import { RARITY, STATS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
-import { getCollection, getReviewWords, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
-import { speak } from '../speech.js';
-import { el, mount, unmount } from './dom.js';
+import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
+import { speak, canSpeak } from '../speech.js';
+import { el, mount, unmount, shuffle } from './dom.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
 
 export function showMenu({ onStart }) {
@@ -41,7 +41,7 @@ export function showMenu({ onStart }) {
       el('div', { class: 'row' },
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('words') }, `📖 單字圖鑑 ${coll.size}/${WORDS.length}`),
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, `⚔️ 武器道具圖鑑 ${gearSeenCount()}/${GEAR_TOTAL}`),
-        review ? el('span', { class: 'chip bad' }, `📝 待複習 ${review} 個字`) : null,
+        el('button', { class: `btn ${review ? 'review-btn' : ''}`, type: 'button', onclick: () => showReview({ onClose: render }) }, `📝 複習單字 ${review}`),
       ),
       el('p', { class: 'help' }, '移動：按住畫面任意處拖曳（電腦也可以用 WASD 或方向鍵）。武器會自動攻擊。'),
     ));
@@ -155,6 +155,75 @@ export function showCodex(tab = 'words') {
   };
   render();
   mount(el('div', { class: 'screen modal' }, card), 'codex');
+}
+
+// 複習：列出答錯過的單字，可以一個一個練習。答對的次數照一般規則扣，扣到 0 就移出清單。
+function reviewList() {
+  return getReviewWords().map(findWord).filter(Boolean);
+}
+
+// 每題輪流換題型；困難題（拼字）只考 7 個字母以內的字，沒有語音就不出聽力題
+const PRACTICE_TYPES = ['easy', 'medium', 'listen', 'hard'];
+
+function practiceType(word, i) {
+  const types = PRACTICE_TYPES.filter(t => t !== 'listen' || canSpeak());
+  const t = types[i % types.length];
+  return t === 'hard' && word.en.length > 7 ? 'medium' : t;
+}
+
+async function practiceRound(words) {
+  // 練習不算在任何一局裡，用一個只記答題數的假 run
+  const run = { quiz: { asked: 0, correct: 0, learned: new Set(), missed: new Set() } };
+  let cleared = 0;
+  for (const [i, word] of shuffle(words).entries()) {
+    const correct = await openQuiz(practiceType(word, i), run, {
+      word,
+      quitLabel: '✕ 結束練習',
+      resultNote: ok => {
+        const left = reviewRemaining(word.en);
+        if (ok && !left) { cleared += 1; return '這個字已經移出複習清單！🎉'; }
+        return ok ? `再答對 ${left} 次就能移出複習清單。` : `沒關係，再答對 ${left} 次就能移出複習清單。`;
+      },
+    });
+    if (correct === null) break;
+  }
+  return { ...run.quiz, cleared };
+}
+
+export function showReview({ onClose } = {}) {
+  const card = el('div', { class: 'card codex review' });
+  let last = null; // 上一輪練習的結果
+  const close = () => { unmount('review'); onClose?.(); };
+  const start = async () => {
+    last = await practiceRound(reviewList());
+    render();
+  };
+  const render = () => {
+    const words = reviewList();
+    card.replaceChildren(
+      el('div', { class: 'shop-head' },
+        el('div', { class: 'title' }, `📝 待複習單字 (${words.length})`),
+        el('button', { class: 'btn', type: 'button', onclick: close }, '關閉'),
+      ),
+      el('div', { class: 'codex-body' }, last?.asked ? el('p', { class: `review-last ${last.correct === last.asked ? 'good' : ''}` },
+        `剛剛練習：答對 ${last.correct}/${last.asked} 題`, last.cleared ? `，${last.cleared} 個字移出清單 🎉` : '') : null,
+      words.length ? [
+        el('p', { class: 'help' }, '遊戲裡答錯的單字會放進這裡，每個字要再答對 2 次才會移出清單（練習時答錯會重新算）。點單字可以聽發音。'),
+        el('button', { class: 'btn primary huge', type: 'button', onclick: start }, `▶ 開始練習（${words.length} 題）`),
+        el('div', { class: 'codex-grid' }, words.map(w => {
+          const left = reviewRemaining(w.en);
+          return el('button', { class: 'codex-word has review-word', type: 'button', onclick: () => speak(w.en) },
+            el('span', { class: 'emoji' }, w.emoji), el('b', {}, w.en), el('small', {}, w.zh),
+            el('small', { class: 'left' }, `還要答對 ${left} 次`));
+        })),
+      ] : el('p', { class: 'help review-empty' }, last?.asked
+        ? '全部複習完了，清單清空！🎉'
+        : '目前沒有待複習的單字。遊戲裡答錯的字會自動放進這裡。')),
+    );
+    card.scrollTop = 0;
+  };
+  render();
+  mount(el('div', { class: 'screen modal' }, card), 'review');
 }
 
 function rollLevelTier(level) {

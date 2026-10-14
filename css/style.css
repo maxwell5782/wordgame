@@ -178,6 +178,7 @@ button.chip { cursor: pointer; }
 
 /* ---------- 題目 ---------- */
 .quiz { text-align: center; width: min(620px, 100%); }
+.quiz-quit { display: block; margin: 0 0 4px auto; min-height: 32px; padding: 4px 10px; font-size: 13px; }
 .quiz-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 800; border: 2px solid; margin-bottom: 6px; }
 .prompt { font-size: clamp(18px, 4vh, 24px); font-weight: 800; margin: 4px 0; }
 .picture { font-size: clamp(56px, 16vh, 110px); line-height: 1.1; }
@@ -252,3 +253,12 @@ button.chip { cursor: pointer; }
 .replace-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; padding: 8px 10px; border: 2px dashed var(--good); border-radius: 10px; font-size: 14px; font-weight: 700; }
 .offer.picking, .inv-weapon.picking { box-shadow: 0 0 0 3px var(--good); }
 .rules { margin-top: 6px; font-size: 0.85em; opacity: 0.75; }
+
+/* 複習單字 */
+.btn.review-btn { border-color: var(--bad); }
+.review .btn.huge { display: block; margin: 10px auto 14px; }
+.codex-word.review-word { border-color: var(--bad); }
+.review-word .left { color: var(--bad); font-weight: 700; }
+.review-last { text-align: center; font-weight: 800; padding: 8px; border-radius: 10px; background: var(--panel2); }
+.review-last.good { color: var(--good); }
+.review-empty { text-align: center; padding: 24px 0; font-size: 16px; }
