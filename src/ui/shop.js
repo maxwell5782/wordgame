@@ -1,7 +1,7 @@
 // 每波結束後的商店：買武器和道具、鎖定商品、答題重骰。
-import { WEAPONS, WEAPON_IDS, MAX_WEAPONS, weaponStats, weaponBaseCost, rangeLabel } from '../data/weapons.js';
+import { WEAPONS, WEAPON_IDS, MAX_WEAPONS, weaponStats, weaponBaseCost, weaponTraits } from '../data/weapons.js';
 import { ITEMS, ITEM_COST, findItem, itemDesc } from '../data/items.js';
-import { RARITY, STATS, applyEffects, priceForWave } from '../state.js';
+import { RARITY, STATS, RULES, applyEffects, priceForWave, statDetail } from '../state.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
 import { quitButton } from './screens.js';
 import { markGearSeen } from '../progress.js';
@@ -56,10 +56,10 @@ function rerollCost(run) {
 
 function weaponDesc(w, run) {
   const s = weaponStats(w, run.stats);
-  const parts = [`傷害 ${s.damage}`, `每 ${s.cooldown.toFixed(2)} 秒`, `射程 ${rangeLabel(s.range)}`];
+  const parts = [`傷害 ${s.damage}`, `每 ${s.cooldown.toFixed(2)} 秒`];
   if (s.pellets > 1) parts.push(`${s.pellets} 發`);
   if (s.pierce > 0) parts.push(`穿透 ${s.pierce}`);
-  return parts.join(' · ');
+  return [...parts, ...weaponTraits(s)].join(' · ');
 }
 
 // 買武器時：有同名同階就直接合成（不佔格子），有空位就放進去，都不行就要替換
@@ -262,8 +262,11 @@ export function openShop(run, onNext, onQuit) {
           return el('span', { class: `chip ${RARITY[it.tier].css}`, title: itemDesc(it) }, `${it.icon} ${it.name}${n > 1 ? ` ×${n}` : ''}`);
         })) : null,
         el('div', { class: 'section-title' }, '能力'),
-        el('div', { class: 'stats' }, Object.entries(STATS).map(([k, s]) =>
-          el('span', { class: 'chip' }, `${s.icon} ${s.name} ${run.stats[k]}${s.pct ? '%' : ''}`))),
+        el('div', { class: 'stats' }, Object.entries(STATS).map(([k, s]) => {
+          const detail = statDetail(k, run.stats);
+          return el('span', { class: 'chip' }, `${s.icon} ${s.name} ${run.stats[k]}${s.pct ? '%' : ''}${detail ? `（${detail}）` : ''}`);
+        })),
+        el('div', { class: 'rules' }, RULES.join(' · ')),
       ),
     );
   }

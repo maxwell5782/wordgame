@@ -1,14 +1,12 @@
 import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
-import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction } from '../state.js';
+import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT } from '../state.js';
 import { Joystick } from '../input/joystick.js';
 
 export const GAME_W = 1280;
 export const GAME_H = 720;
 const ARENA = new Phaser.Geom.Rectangle(40, 40, 1200, 640);
 const WARN_TIME = 0.8;
-const INVULN_TIME = 0.6;
-const BASE_PICKUP = 70;
 
 export class ArenaScene extends Phaser.Scene {
   constructor() {
@@ -207,7 +205,7 @@ export class ArenaScene extends Phaser.Scene {
 
     const run = this.run;
     if (run.stats.regen > 0 && run.hp < run.stats.maxHp) {
-      run.hp = Math.min(run.stats.maxHp, run.hp + run.stats.regen * 0.2 * dt);
+      run.hp = Math.min(run.stats.maxHp, run.hp + run.stats.regen * REGEN_PER_POINT * dt);
     }
     if (this.invuln > 0) {
       this.invuln -= dt;
@@ -340,6 +338,7 @@ export class ArenaScene extends Phaser.Scene {
       this.physics.velocityFromRotation(a, st.bulletSpeed, b.body.velocity);
       b.dmg = st.damage;
       b.pierce = st.pierce;
+      b.knockback = st.knockback;
       b.life = st.range / st.bulletSpeed * 1.15;
       if (!b.hits) b.hits = new Set();
       b.hits.clear();
@@ -360,7 +359,7 @@ export class ArenaScene extends Phaser.Scene {
     e.hp -= b.dmg;
     e.setTintFill(0xffffff);
     e.flash = 0.06;
-    const kb = 10;
+    const kb = b.knockback;
     const a = Math.atan2(b.body.velocity.y, b.body.velocity.x);
     e.x += Math.cos(a) * kb;
     e.y += Math.sin(a) * kb;
