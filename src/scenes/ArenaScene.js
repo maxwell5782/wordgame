@@ -1,6 +1,6 @@
 import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
-import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT } from '../state.js';
+import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT, REVIVE_INVULN, REVIVE_CLEAR_RADIUS } from '../state.js';
 import { Joystick } from '../input/joystick.js';
 
 export const GAME_W = 1280;
@@ -89,7 +89,8 @@ export class ArenaScene extends Phaser.Scene {
     this.joy.reset();
     this.refreshWeapons();
     this.physics.resume();
-    this.hint.setText(run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`);
+    const buff = run.waveDamage ? `\n聽力題答對：這一波傷害 +${run.waveDamage}%` : '';
+    this.hint.setText((run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`) + buff);
     this.hintTime = run.wave === 1 ? 4 : 1.5;
     this.hint.setVisible(true).setAlpha(1);
     this.pushHud();
@@ -102,6 +103,7 @@ export class ArenaScene extends Phaser.Scene {
 
   endWave() {
     this.running = false;
+    this.run.waveDamage = 0;
     this.physics.pause();
     this.joy.reset();
     this.clearField();
@@ -141,10 +143,33 @@ export class ArenaScene extends Phaser.Scene {
     this.time.delayedCall(900, () => this.hooks.onDeath());
   }
 
+  // 答題接關：回血、清掉身邊的怪、短暫無敵，從倒下的地方繼續這一波
+  revive(pct) {
+    const run = this.run;
+    run.hp = Math.max(1, Math.round(run.stats.maxHp * pct));
+    const px = this.player.x;
+    const py = this.player.y;
+    const r2 = REVIVE_CLEAR_RADIUS * REVIVE_CLEAR_RADIUS;
+    this.enemies.children.iterate(e => {
+      if (e.active && (e.x - px) ** 2 + (e.y - py) ** 2 <= r2) e.disableBody(true, true);
+    });
+    this.invuln = REVIVE_INVULN;
+    this.player.clearTint().setAlpha(1);
+    this.joy.reset();
+    this.running = true;
+    this.paused = false;
+    this.physics.resume();
+    this.cameras.main.flash(250, 255, 255, 255);
+    this.showFloat(px, py - 40, '接關！', '#7dff9a');
+    this.pushHud();
+  }
+
   refreshWeapons() {
     for (const s of this.weaponSlots) s.spr.destroy();
     this.weaponSlots = this.run.weapons.map(w => {
-      const st = weaponStats(w, this.run.stats);
+      // 每波開始聽力題答對的額外傷害，只算這一波
+      const stats = { ...this.run.stats, damage: this.run.stats.damage + this.run.waveDamage };
+      const st = weaponStats(w, stats);
       return {
         st,
         cd: Math.random() * st.cooldown,

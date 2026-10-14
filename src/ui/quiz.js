@@ -2,6 +2,7 @@
 //   easy   看圖、聽發音，從 4 個英文單字選一個
 //   medium 看中文，從 4 個拼法中選出正確的
 //   hard   看中文、聽發音，用字母方塊拼出單字
+//   listen 只聽發音，從 4 個英文單字選一個（每波開始的聽力題，不放在重骰按鈕裡）
 import { WORDS, wordsForTopic } from '../data/words.js';
 import { pickWord, recordAnswer } from '../progress.js';
 import { speak, canSpeak } from '../speech.js';
@@ -11,6 +12,11 @@ export const DIFFICULTY = {
   easy: { name: '簡單', desc: '看圖選單字', guarantee: 0 },
   medium: { name: '中等', desc: '選出正確拼字', guarantee: 1 },
   hard: { name: '困難', desc: '自己拼出單字', guarantee: 2 },
+};
+
+// 不在重骰選單裡的題型
+const OTHER_QUIZ = {
+  listen: { name: '聽力', desc: '聽發音選單字', guarantee: 0 },
 };
 
 // 常見短英文字：產生錯誤拼字時避開它們，免得「錯誤選項」其實是別的真單字
@@ -104,12 +110,13 @@ function speakButton(word) {
 }
 
 // 回傳 Promise<boolean>：答對 true，答錯 false
-export function openQuiz(difficulty, run) {
+// resultNote(correct) 可以換掉答題後的說明文字（預設是重骰用的說明）
+export function openQuiz(difficulty, run, { resultNote } = {}) {
   return new Promise(resolve => {
     // 困難題避開太長的字
     const filter = difficulty === 'hard' ? w => w.en.length <= 7 : () => true;
     const word = pickWord(run.topic, run.wordLevel, filter);
-    const diff = DIFFICULTY[difficulty];
+    const diff = DIFFICULTY[difficulty] ?? OTHER_QUIZ[difficulty];
 
     const finish = correct => {
       recordAnswer(word, correct, run);
@@ -118,7 +125,7 @@ export function openQuiz(difficulty, run) {
         el('div', { class: 'big' }, correct ? '答對了！🎉' : '再加油！💪'),
         el('div', { class: 'answer' }, el('span', { class: 'emoji' }, word.emoji), ' ', el('b', {}, word.en), ` ＝ ${word.zh}`),
         speakButton(word),
-        el('div', { class: 'note' }, correct
+        el('div', { class: 'note' }, resultNote ? resultNote(correct) : correct
           ? (diff.guarantee ? `重骰保證出現${diff.guarantee === 1 ? '藍裝 🔵' : '紫裝 🟣'}！` : '重骰完成！')
           : '這次是一般重骰，這個字會放進複習清單。'),
         el('button', { class: 'btn primary', type: 'button', onclick: () => { unmount('quiz'); resolve(correct); } }, '繼續'),
@@ -127,7 +134,16 @@ export function openQuiz(difficulty, run) {
     };
 
     let body;
-    if (difficulty === 'easy') {
+    if (difficulty === 'listen') {
+      const options = shuffle([word, ...distractorWords(word, 3)]);
+      body = [
+        el('div', { class: 'prompt' }, '聽聽看，是哪個單字？'),
+        el('button', { class: 'btn speak listen-btn', type: 'button', 'aria-label': '再聽一次', onclick: () => speak(word.en) }, '🔊'),
+        el('div', { class: 'options' }, options.map(o =>
+          el('button', { class: 'btn option', type: 'button', onclick: () => finish(o.en === word.en) }, o.en))),
+      ];
+      setTimeout(() => speak(word.en), 250);
+    } else if (difficulty === 'easy') {
       const options = shuffle([word, ...distractorWords(word, 3)]);
       body = [
         el('div', { class: 'prompt' }, '這是哪個英文單字？'),
