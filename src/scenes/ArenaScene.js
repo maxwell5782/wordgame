@@ -294,8 +294,12 @@ export class ArenaScene extends Phaser.Scene {
     const py = this.player.y;
     this.weaponSlots.forEach((slot, i) => {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-      const r = n === 1 ? 26 : 38;
-      slot.spr.setPosition(px + Math.cos(a) * r, py + Math.sin(a) * r);
+      // 武器越多圈越大；貼牆時把武器夾回場內，不然子彈一射出就在場外被清掉
+      const r = n === 1 ? 26 : 30 + 4 * n;
+      slot.spr.setPosition(
+        Phaser.Math.Clamp(px + Math.cos(a) * r, ARENA.x + 4, ARENA.right - 4),
+        Phaser.Math.Clamp(py + Math.sin(a) * r, ARENA.y + 4, ARENA.bottom - 4),
+      );
       slot.cd -= dt;
       if (slot.cd > 0) return;
       const target = this.nearestEnemy(slot.spr.x, slot.spr.y, slot.st.range);
