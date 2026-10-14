@@ -32,13 +32,15 @@ python3 -m http.server 8080
 
 ## 上線到 GitHub Pages
 
-這個專案不需要編譯，直接用 GitHub Pages 發布：
+這個專案不需要編譯。`.github/workflows/pages.yml` 會在每次 push 時把檔案發布到 `gh-pages` 分支：
 
-1. 到 repo 的 **Settings → Pages**
-2. **Source** 選 **Deploy from a branch**，Branch 選 `main`、資料夾選 `/ (root)`，按 Save
-3. 幾分鐘後就能在 `https://<你的帳號>.github.io/wordgame/` 玩
+- `main` → 網站根目錄 `https://<你的帳號>.github.io/wordgame/`
+- 其他分支 → 預覽網址 `https://<你的帳號>.github.io/wordgame/preview/<分支名>/`（分支名裡的 `/` 會換成 `-`），所有預覽列在 `.../wordgame/preview/`
+- 分支刪掉時，它的預覽也會一起移除
 
-之後每次 push 到 `main` 都會自動更新。改了檔案記得把 `sw.js` 裡的 `VERSION` 加 1，玩家才會拿到新版。
+第一次設定：到 repo 的 **Settings → Pages**，**Source** 選 **Deploy from a branch**，Branch 選 `gh-pages`、資料夾選 `/ (root)`，按 Save。
+
+改了檔案記得把 `sw.js` 裡的 `VERSION` 加 1，玩家才會拿到新版。預覽網址不會安裝離線快取，所以一定是最新版；預覽和正式版共用同一份存檔（圖鑑、複習清單）。
 
 ## 專案結構
 
@@ -49,6 +51,8 @@ lib/                    Phaser 3 遊戲引擎（已內附，不需要網路）
 src/main.js             遊戲流程：主選單 → 波次 → 升級 → 商店 → 結算
 src/scenes/ArenaScene.js  戰鬥場景：移動、出怪、武器、子彈、材料
 src/scenes/BootScene.js   用程式畫出所有圖形（不需要圖片檔）
+src/art/pixel.js        原創像素圖（角色、敵人、武器）和草地／石牆地圖
+fonts/                  像素字型 Pixelify Sans（OFL 授權，倒數計時和材料數用）
 src/input/joystick.js   浮動虛擬搖桿
 src/ui/shop.js          商店、合成、鎖定、答題重骰
 src/ui/quiz.js          三種難度的英文題目

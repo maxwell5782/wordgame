@@ -1,0 +1,82 @@
+# 發布到 gh-pages 分支：
+# - 主分支 → 網站根目錄（https://maxwell5782.github.io/wordgame/）
+# - 其他分支 → preview/分支名/（例如 .../wordgame/preview/claude-xxx/），分支刪掉時一起移除
+# GitHub Pages 的來源要設成 gh-pages 分支的根目錄。
+name: 發布網站與分支預覽
+
+on:
+  push:
+    branches-ignore: [gh-pages]
+  delete:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出主分支
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: main
+
+      - name: 取出這次推送的分支
+        if: github.event_name == 'push' && github.ref_name != github.event.repository.default_branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: branch
+
+      - name: 更新 gh-pages
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.event_name == 'delete' && github.event.ref || github.ref_name }}
+          REF_TYPE: ${{ github.event.ref_type }}
+          DEFAULT: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+          if ! git clone --depth 1 --branch gh-pages "$url" site; then
+            mkdir site && git -C site init -b gh-pages && git -C site remote add origin "$url"
+          fi
+          slug=$(printf '%s' "$REF_NAME" | tr -c 'A-Za-z0-9._-' '-')
+
+          # 主分支永遠放在根目錄（preview/ 不動）
+          rsync -a --delete --exclude .git --exclude .github --exclude preview --exclude .nojekyll main/ site/
+          if [ "$EVENT" = push ] && [ "$REF_NAME" != "$DEFAULT" ]; then
+            mkdir -p "site/preview/$slug"
+            rsync -a --delete --exclude .git --exclude .github branch/ "site/preview/$slug/"
+          fi
+          if [ "$EVENT" = delete ] && [ "$REF_TYPE" = branch ]; then
+            rm -rf "site/preview/$slug"
+          fi
+
+          # 預覽清單頁
+          mkdir -p site/preview
+          {
+            echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>分支預覽</title>'
+            echo '<body style="font:18px system-ui;padding:16px"><h1>分支預覽</h1><ul>'
+            for d in site/preview/*/; do
+              [ -d "$d" ] || continue
+              n=$(basename "$d")
+              echo "<li><a href=\"$n/\">$n</a></li>"
+            done
+            echo '</ul><p><a href="../">← 正式版</a></p></body>'
+          } > site/preview/index.html
+          touch site/.nojekyll
+
+          cd site
+          git add -A
+          if git diff --cached --quiet; then echo "沒有變更"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898099+github-actions[bot]@users.noreply.github.com" \
+            commit -m "發布 ${EVENT} ${REF_NAME} (${GITHUB_SHA::7})"
+          git push origin gh-pages
