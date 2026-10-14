@@ -69,10 +69,10 @@ async function waveQuiz() {
   run.waveDamage = correct ? LISTEN_WAVE_DAMAGE : 0;
 }
 
-async function startRun(topic, wordLevel) {
+async function startRun(topic, wordLevel, startWeapon) {
   clearUi();
   game.scene.stop('arena');
-  run = newRun(topic, wordLevel);
+  run = newRun(topic, wordLevel, startWeapon);
   for (const w of run.weapons) markGearSeen('weapon', w.id);
   await waveQuiz();
   hud.show();
@@ -82,7 +82,7 @@ async function startRun(topic, wordLevel) {
 function finish(won) {
   hud.hide();
   showResults(run, won, {
-    onAgain: () => startRun(run.topic, run.wordLevel),
+    onAgain: () => startRun(run.topic, run.wordLevel, run.startWeapon),
     onMenu: goMenu,
   });
 }

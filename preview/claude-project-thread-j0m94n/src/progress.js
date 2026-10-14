@@ -6,6 +6,7 @@ const KEY_REVIEW = 'wordgame.review';
 const KEY_COLLECTION = 'wordgame.collection';
 const KEY_TOPIC = 'wordgame.topic';
 const KEY_LEVEL = 'wordgame.level';
+const KEY_START_WEAPON = 'wordgame.startWeapon';
 const KEY_SEEN_GEAR = 'wordgame.seenGear';
 
 function load(key, fallback) {
@@ -71,6 +72,14 @@ export function getSavedLevel() {
 
 export function saveLevel(level) {
   save(KEY_LEVEL, level);
+}
+
+export function getSavedStartWeapon() {
+  return load(KEY_START_WEAPON, 'pistol');
+}
+
+export function saveStartWeapon(id) {
+  save(KEY_START_WEAPON, id);
 }
 
 // 出題：約 40% 機率從複習清單挑，其餘從主題和程度裡隨機挑，並避開最近出過的字
