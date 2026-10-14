@@ -38,6 +38,16 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xffffff).fillTriangle(0, 0, 22, 4, 0, 8);
     g.generateTexture('blade', 22, 8);
     g.clear();
+    g.fillStyle(0xffd84d).fillTriangle(0, 6, 6, 1, 6, 11);
+    g.fillStyle(0xffffff).fillRect(6, 2, 12, 8).fillTriangle(18, 0, 24, 6, 18, 12);
+    g.generateTexture('rocket', 24, 12);
+    g.clear();
+
+    // 爆炸（白色，遊戲中縮放到爆炸半徑並上色）
+    g.fillStyle(0xffffff, 0.35).fillCircle(64, 64, 64);
+    g.lineStyle(6, 0xffffff, 0.9).strokeCircle(64, 64, 61);
+    g.generateTexture('boom', 128, 128);
+    g.clear();
 
     // 材料
     g.fillStyle(0x4ef0a0).fillPoints([{ x: 7, y: 0 }, { x: 14, y: 7 }, { x: 7, y: 14 }, { x: 0, y: 7 }], true);
@@ -59,6 +69,10 @@ export class BootScene extends Phaser.Scene {
     g.clear();
     g.fillStyle(0xffffff).fillTriangle(6, 0, 24, 5, 6, 10).fillRect(0, 3, 7, 4);
     g.generateTexture('w_knife', 24, 10);
+    g.clear();
+    g.fillStyle(0xffffff).fillRect(0, 1, 30, 10).fillRect(8, 9, 6, 6);
+    g.fillStyle(0xffffff).fillRect(26, 0, 4, 12);
+    g.generateTexture('w_bazooka', 30, 15);
     g.clear();
 
     // 搖桿

@@ -343,6 +343,8 @@ export class ArenaScene extends Phaser.Scene {
       b.dmg = st.damage;
       b.pierce = st.pierce;
       b.knockback = st.knockback;
+      b.blast = st.blast;
+      b.color = st.color;
       b.life = st.range / st.bulletSpeed * 1.15;
       if (!b.hits) b.hits = new Set();
       b.hits.clear();
@@ -359,6 +361,11 @@ export class ArenaScene extends Phaser.Scene {
 
   onBulletHit(b, e) {
     if (!b.active || !e.active || b.hits.has(e)) return;
+    if (b.blast > 0) {
+      this.explode(b.x, b.y, b.blast, b.dmg, b.knockback, b.color);
+      b.disableBody(true, true);
+      return;
+    }
     b.hits.add(e);
     e.hp -= b.dmg;
     e.setTintFill(0xffffff);
@@ -371,6 +378,33 @@ export class ArenaScene extends Phaser.Scene {
     if (e.hp <= 0) this.killEnemy(e);
     b.pierce -= 1;
     if (b.pierce < 0) b.disableBody(true, true);
+  }
+
+  // 火箭爆炸：半徑內每隻敵人都吃滿傷害，並從爆炸中心往外推
+  explode(x, y, radius, dmg, kb, color) {
+    const fx = this.add.image(x, y, 'boom').setTint(color).setDepth(9)
+      .setScale(radius / 64 * 0.4).setAlpha(0.9);
+    this.tweens.add({ targets: fx, scale: radius / 64, alpha: 0, duration: 260, onComplete: () => fx.destroy() });
+    this.cameras.main.shake(80, 0.003);
+    const hit = [];
+    this.enemies.children.iterate(e => {
+      if (!e.active) return;
+      const dx = e.x - x;
+      const dy = e.y - y;
+      // 敵人身體碰到爆炸圈就算
+      const reach = radius + e.body.halfWidth;
+      if (dx * dx + dy * dy <= reach * reach) hit.push(e);
+    });
+    for (const e of hit) {
+      e.hp -= dmg;
+      e.setTintFill(0xffffff);
+      e.flash = 0.06;
+      const a = Math.atan2(e.y - y, e.x - x);
+      e.x += Math.cos(a) * kb;
+      e.y += Math.sin(a) * kb;
+      this.showFloat(e.x, e.y - 18, String(dmg), '#ffb84d');
+      if (e.hp <= 0) this.killEnemy(e);
+    }
   }
 
   killEnemy(e) {

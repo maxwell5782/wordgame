@@ -1,6 +1,6 @@
 // 主選單、升級、暫停、結算、圖鑑（單字／武器／道具）等畫面
 import { WORDS, TOPICS, ALL_TOPICS, wordsForTopic, findWord } from '../data/words.js';
-import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits } from '../data/weapons.js';
+import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, itemDesc } from '../data/items.js';
 import { RARITY, STATS, MAX_WAVES, applyEffects, formatStat } from '../state.js';
 import { getCollection, getReviewWords, getSavedTopic, saveTopic, hasSeenGear } from '../progress.js';
@@ -87,9 +87,7 @@ function codexWeapons() {
             el('tr', {}, el('th', {}, '階級'), el('th', {}, '傷害'), el('th', {}, '間隔'), el('th', {}, '特性')),
             RARITY.map((r, tier) => {
               const st = weaponStats({ id, tier }, NO_STATS);
-              const extra = [];
-              if (st.pellets > 1) extra.push(`${st.pellets} 發`);
-              if (st.pierce > 0) extra.push(`穿透 ${st.pierce}`);
+              const extra = weaponTierExtras(st);
               return el('tr', { class: r.css },
                 el('td', { class: 'tier-name' }, r.name), el('td', {}, st.damage),
                 el('td', {}, `${st.cooldown.toFixed(2)} 秒`), el('td', {}, extra.join('、') || '—'));
