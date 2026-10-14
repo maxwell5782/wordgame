@@ -5,6 +5,7 @@ import { wordsForTopic } from './data/words.js';
 const KEY_REVIEW = 'wordgame.review';
 const KEY_COLLECTION = 'wordgame.collection';
 const KEY_TOPIC = 'wordgame.topic';
+const KEY_LEVEL = 'wordgame.level';
 const KEY_SEEN_GEAR = 'wordgame.seenGear';
 
 function load(key, fallback) {
@@ -59,9 +60,20 @@ export function saveTopic(topic) {
   save(KEY_TOPIC, topic);
 }
 
-// 出題：約 40% 機率從複習清單挑，其餘從主題隨機挑，並避開最近出過的字
-export function pickWord(topic, filter = () => true) {
-  const pool = wordsForTopic(topic).filter(filter);
+export function getSavedLevel() {
+  return load(KEY_LEVEL, 0);
+}
+
+export function saveLevel(level) {
+  save(KEY_LEVEL, level);
+}
+
+// 出題：約 40% 機率從複習清單挑，其餘從主題和程度裡隨機挑，並避開最近出過的字
+export function pickWord(topic, level, filter = () => true) {
+  const all = wordsForTopic(topic, level);
+  const filtered = all.filter(filter);
+  // 篩完沒有字（例如進階題全都太長）就不篩
+  const pool = filtered.length ? filtered : all;
   const reviewPool = pool.filter(w => review[w.en] && !recent.includes(w.en));
   let choices = reviewPool.length && Math.random() < 0.4 ? reviewPool : pool.filter(w => !recent.includes(w.en));
   if (!choices.length) choices = pool;

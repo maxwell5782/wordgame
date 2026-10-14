@@ -53,7 +53,7 @@ src/input/joystick.js   浮動虛擬搖桿
 src/ui/shop.js          商店、合成、鎖定、答題重骰
 src/ui/quiz.js          三種難度的英文題目
 src/ui/screens.js       主選單、升級、暫停、結算、圖鑑
-src/data/words.js       單字庫（照格式加一行就能新增單字）
+src/data/words.js       單字庫，約 260 字、16 個主題、3 個程度（照格式加一行就能新增單字）
 src/data/weapons.js     武器數值
 src/data/items.js       道具數值
 src/data/enemies.js     敵人數值與出怪比例
