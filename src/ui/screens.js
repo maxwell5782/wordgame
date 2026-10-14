@@ -153,29 +153,51 @@ function rollLevelTier(level) {
   return 0;
 }
 
-// 升級：四選一能力。回傳 Promise，選完 resolve。
+// 升級：四選一能力。選之前可以答一題中等題，答對四個選項都升一階。回傳 Promise，選完 resolve。
+export const LEVELUP_QUIZ = 'medium';
+
 export function showLevelUp(run) {
   return new Promise(resolve => {
     const keys = Object.keys(STATS).sort(() => Math.random() - 0.5).slice(0, 4);
-    const options = keys.map(k => {
-      const tier = rollLevelTier(run.level);
-      return { key: k, tier, value: STATS[k].levelUp[tier] };
-    });
-    const screen = el('div', { class: 'screen modal' },
-      el('div', { class: 'card levelup' },
+    const options = keys.map(k => ({ key: k, tier: rollLevelTier(run.level) }));
+    let quizState = 'ready'; // ready → busy → good / bad
+    const card = el('div', { class: 'card levelup' });
+
+    const askQuiz = async () => {
+      quizState = 'busy';
+      render();
+      const correct = await openQuiz(LEVELUP_QUIZ, run, {
+        resultNote: ok => ok ? '四個能力選項都升一階！' : '這次選項不變，這個字會放進複習清單。',
+      });
+      if (correct) for (const o of options) o.tier = Math.min(3, o.tier + 1);
+      quizState = correct ? 'good' : 'bad';
+      render();
+    };
+
+    const render = () => {
+      card.replaceChildren(
         el('div', { class: 'title' }, `⬆️ 升級了！（Lv ${run.level - run.pendingLevels + 1}）`),
         el('p', { class: 'help' }, '選一個能力'),
-        el('div', { class: 'offers' }, options.map(o =>
-          el('button', {
-            class: `offer pickable ${RARITY[o.tier].css}`, type: 'button',
-            onclick: () => { applyEffects(run, { [o.key]: o.value }); unmount('levelup'); resolve(); },
+        el('div', { class: 'offers' }, options.map(o => {
+          const value = STATS[o.key].levelUp[o.tier];
+          return el('button', {
+            class: `offer pickable ${RARITY[o.tier].css}`, type: 'button', disabled: quizState === 'busy',
+            onclick: () => { applyEffects(run, { [o.key]: value }); unmount('levelup'); resolve(); },
           },
           el('div', { class: 'icon' }, STATS[o.key].icon),
           el('div', { class: 'name' }, STATS[o.key].name),
           el('div', { class: 'rarity' }, RARITY[o.tier].name),
-          el('div', { class: 'desc' }, formatStat(o.key, o.value))))),
-      ));
-    mount(screen, 'levelup');
+          el('div', { class: 'desc' }, formatStat(o.key, value)));
+        })),
+        quizState === 'good' ? el('div', { class: 'chip good' }, '答對了！選項都升一階了 🎉')
+          : quizState === 'bad' ? el('div', { class: 'chip bad' }, '答錯了，選項不變')
+          : el('button', { class: `btn diff d-${LEVELUP_QUIZ} levelup-quiz`, type: 'button', disabled: quizState === 'busy', onclick: askQuiz },
+            el('b', {}, `📝 答${DIFFICULTY[LEVELUP_QUIZ].name}題：四個選項都升一階`),
+            el('small', {}, `${DIFFICULTY[LEVELUP_QUIZ].desc}，答錯選項不變（每次升級一題）`)),
+      );
+    };
+    render();
+    mount(el('div', { class: 'screen modal' }, card), 'levelup');
   });
 }
 

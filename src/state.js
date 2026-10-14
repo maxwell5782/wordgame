@@ -39,6 +39,8 @@ export function newRun(topic) {
     shop: { slots: [], rerolls: 0 },
     quiz: { asked: 0, correct: 0, learned: new Set(), missed: new Set() },
     revives: 0,
+    // 每波開始聽力題答對時，這一波的額外傷害 %
+    waveDamage: 0,
   };
 }
 
@@ -95,6 +97,9 @@ export const REVIVE_HP = { easy: 0.3, medium: 0.6, hard: 1 };
 export const REVIVE_INVULN = 2;
 export const REVIVE_CLEAR_RADIUS = 220;
 
+// 每波開始的聽力題答對時，這一波傷害加多少 %
+export const LISTEN_WAVE_DAMAGE = 10;
+
 // 不會變的規則，也一起顯示給玩家看
 export const RULES = [
   `被撞後無敵 ${INVULN_TIME} 秒`,
@@ -102,6 +107,8 @@ export const RULES = [
   '升級時最大生命 +1',
   '波次結束時地上的材料自動收進來',
   `倒下時答對英文題可接關，每局 ${MAX_REVIVES} 次`,
+  `每波開始答對聽力題，這一波傷害 +${LISTEN_WAVE_DAMAGE}%`,
+  '升級時答對中等題，四個能力選項都升一階',
 ];
 
 // 玩家基礎移動速度（像素/秒），只比史萊姆（105）快一點，想跑更快要靠道具；改這裡時記得一起看敵人速度

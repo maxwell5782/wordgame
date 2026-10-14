@@ -89,7 +89,8 @@ export class ArenaScene extends Phaser.Scene {
     this.joy.reset();
     this.refreshWeapons();
     this.physics.resume();
-    this.hint.setText(run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`);
+    const buff = run.waveDamage ? `\n聽力題答對：這一波傷害 +${run.waveDamage}%` : '';
+    this.hint.setText((run.wave === 1 ? '按住畫面拖曳，或用 WASD / 方向鍵移動\n武器會自動攻擊！' : `第 ${run.wave} 波`) + buff);
     this.hintTime = run.wave === 1 ? 4 : 1.5;
     this.hint.setVisible(true).setAlpha(1);
     this.pushHud();
@@ -102,6 +103,7 @@ export class ArenaScene extends Phaser.Scene {
 
   endWave() {
     this.running = false;
+    this.run.waveDamage = 0;
     this.physics.pause();
     this.joy.reset();
     this.clearField();
@@ -165,7 +167,9 @@ export class ArenaScene extends Phaser.Scene {
   refreshWeapons() {
     for (const s of this.weaponSlots) s.spr.destroy();
     this.weaponSlots = this.run.weapons.map(w => {
-      const st = weaponStats(w, this.run.stats);
+      // 每波開始聽力題答對的額外傷害，只算這一波
+      const stats = { ...this.run.stats, damage: this.run.stats.damage + this.run.waveDamage };
+      const st = weaponStats(w, stats);
       return {
         st,
         cd: Math.random() * st.cooldown,

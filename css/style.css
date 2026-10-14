@@ -220,7 +220,11 @@ button.chip { cursor: pointer; }
 .btn.armed { border-color: var(--bad); color: var(--bad); }
 
 .pause { display: grid; gap: 12px; width: min(360px, 100%); text-align: center; }
-.levelup { text-align: center; }
+.levelup { text-align: center; display: grid; gap: 10px; }
+.levelup .offers { margin-top: 0; }
+.levelup-quiz { justify-self: center; padding: 8px 18px; }
+.levelup > .chip { justify-self: center; }
+.listen-btn { font-size: clamp(48px, 12vh, 80px); padding: 6px 28px; margin: 6px auto; display: block; }
 .revive { display: grid; gap: 10px; width: min(560px, 100%); text-align: center; }
 .revive .reroll-btns { margin-top: 0; }
 

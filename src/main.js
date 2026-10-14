@@ -1,10 +1,12 @@
 import { BootScene } from './scenes/BootScene.js';
 import { ArenaScene, GAME_W, GAME_H } from './scenes/ArenaScene.js';
-import { newRun, MAX_WAVES } from './state.js';
+import { newRun, MAX_WAVES, LISTEN_WAVE_DAMAGE } from './state.js';
 import { hud } from './ui/hud.js';
 import { openShop } from './ui/shop.js';
 import { showMenu, showLevelUp, showPause, showResults, showRevive, canRevive, isPauseOpen } from './ui/screens.js';
 import { markGearSeen } from './progress.js';
+import { openQuiz } from './ui/quiz.js';
+import { canSpeak } from './speech.js';
 import { clearUi, unmount } from './ui/dom.js';
 
 const game = new Phaser.Game({
@@ -36,8 +38,9 @@ const hooks = {
       await showLevelUp(run);
       run.pendingLevels -= 1;
     }
-    openShop(run, () => {
+    openShop(run, async () => {
       clearUi();
+      await waveQuiz();
       hud.show();
       arena().nextWave();
     }, goMenu);
@@ -56,10 +59,21 @@ const hooks = {
   },
 };
 
-function startRun(topic) {
+// 每波開始前的聽力題：答對這一波傷害加成。裝置不能發音時改用看圖題。
+async function waveQuiz() {
+  const kind = canSpeak() ? 'listen' : 'easy';
+  const correct = await openQuiz(kind, run, {
+    resultNote: ok => ok ? `這一波傷害 +${LISTEN_WAVE_DAMAGE}%！` : '這一波沒有加成，這個字會放進複習清單。',
+  });
+  run.waveDamage = correct ? LISTEN_WAVE_DAMAGE : 0;
+}
+
+async function startRun(topic) {
   clearUi();
+  game.scene.stop('arena');
   run = newRun(topic);
   for (const w of run.weapons) markGearSeen('weapon', w.id);
+  await waveQuiz();
   hud.show();
   game.scene.start('arena', { run, hooks });
 }

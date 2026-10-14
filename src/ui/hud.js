@@ -27,7 +27,7 @@ export const hud = {
     set('xp-fill', 'width', `${run.xp / xpToNext(run.level) * 100}%`);
     set('lv-text', 'text', `Lv ${run.level}`);
     set('mat-text', 'text', String(run.materials));
-    set('wave-text', 'text', `第 ${run.wave} / ${MAX_WAVES} 波`);
+    set('wave-text', 'text', `第 ${run.wave} / ${MAX_WAVES} 波${run.waveDamage ? ` · ⚔️+${run.waveDamage}%` : ''}`);
     set('timer-text', 'text', String(timeLeft));
     set('timer-text', 'color', timeLeft <= 5 ? '#ff6b6b' : '');
   },
