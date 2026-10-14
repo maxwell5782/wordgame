@@ -120,6 +120,11 @@ game.events.once('boot-ready', goMenu);
 // 方便在瀏覽器主控台除錯
 window.wordgame = { game, get run() { return run; } };
 
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+// 像素字型（傷害數字用），先載入才不會第一次顯示成一般字
+document.fonts?.load('22px "Pixelify Sans"').catch(() => {});
+
+// 分支預覽網址（.../preview/分支名/）不裝離線快取，免得和正式版的快取互相影響
+const isPreview = location.pathname.includes('/preview/');
+if (!isPreview && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

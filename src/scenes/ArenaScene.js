@@ -2,6 +2,7 @@ import { ENEMIES, pickEnemyType, enemyScale } from '../data/enemies.js';
 import { weaponStats } from '../data/weapons.js';
 import { RARITY, waveDuration, addMaterials, playerSpeed, armorReduction, INVULN_TIME, BASE_PICKUP, REGEN_PER_POINT, REVIVE_INVULN, REVIVE_CLEAR_RADIUS } from '../state.js';
 import { Joystick } from '../input/joystick.js';
+import { makeArenaTexture } from '../art/pixel.js';
 
 export const GAME_W = 1280;
 export const GAME_H = 720;
@@ -22,20 +23,20 @@ export class ArenaScene extends Phaser.Scene {
     this.drawArena();
     this.physics.world.setBounds(ARENA.x, ARENA.y, ARENA.width, ARENA.height);
 
-    this.player = this.physics.add.image(GAME_W / 2, GAME_H / 2, 'player').setDepth(10);
+    this.player = this.physics.add.sprite(GAME_W / 2, GAME_H / 2, 'player', 0).setDepth(10);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setCircle(15, 5, 5);
+    this.player.body.setCircle(15, this.player.width / 2 - 15, this.player.height / 2 - 13);
 
     // 物件池：敵人、子彈、材料、警示都重複使用，不一直建立和銷毀
-    this.enemies = this.physics.add.group({ maxSize: 220 });
+    this.enemies = this.physics.add.group({ maxSize: 220, classType: Phaser.Physics.Arcade.Sprite });
     this.bullets = this.physics.add.group({ maxSize: 400 });
     this.mats = this.add.group({ maxSize: 500 });
     this.warns = this.add.group({ maxSize: 120 });
     this.floats = [];
     for (let i = 0; i < 40; i++) {
       this.floats.push(this.add.text(0, 0, '', {
-        fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold',
-        color: '#ffffff', stroke: '#000000', strokeThickness: 4,
+        fontFamily: '"Pixelify Sans", system-ui, sans-serif', fontSize: '22px', fontStyle: 'bold',
+        color: '#ffffff', stroke: '#1b1f3a', strokeThickness: 5,
       }).setOrigin(0.5).setDepth(50).setActive(false).setVisible(false));
     }
     this.weaponSlots = [];
@@ -57,18 +58,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   drawArena() {
-    // 只畫一次成貼圖，不要每幀重畫格線
-    if (!this.textures.exists('arena')) {
-      const g = this.make.graphics({ x: 0, y: 0 }, false);
-      g.fillStyle(0x0e1124).fillRect(0, 0, GAME_W, GAME_H);
-      g.fillStyle(0x232a4d).fillRoundedRect(ARENA.x, ARENA.y, ARENA.width, ARENA.height, 24);
-      g.lineStyle(1, 0xffffff, 0.05);
-      for (let x = ARENA.x + 60; x < ARENA.right; x += 60) g.lineBetween(x, ARENA.y + 4, x, ARENA.bottom - 4);
-      for (let y = ARENA.y + 60; y < ARENA.bottom; y += 60) g.lineBetween(ARENA.x + 4, y, ARENA.right - 4, y);
-      g.lineStyle(4, 0x3a4380).strokeRoundedRect(ARENA.x, ARENA.y, ARENA.width, ARENA.height, 24);
-      g.generateTexture('arena', GAME_W, GAME_H);
-      g.destroy();
-    }
+    // 只畫一次成貼圖：像素草地和石牆
+    if (!this.textures.exists('arena')) makeArenaTexture(this, 'arena', GAME_W, GAME_H, ARENA);
     this.add.image(0, 0, 'arena').setOrigin(0);
   }
 
@@ -138,7 +129,7 @@ export class ArenaScene extends Phaser.Scene {
     this.running = false;
     this.physics.pause();
     this.joy.reset();
-    this.player.setTint(0x555555);
+    this.player.stop().setFrame(0).setTint(0x555555);
     this.pushHud();
     this.time.delayedCall(900, () => this.hooks.onDeath());
   }
@@ -227,6 +218,8 @@ export class ArenaScene extends Phaser.Scene {
     const sp = playerSpeed(this.run.stats);
     this.player.setVelocity(mx * sp, my * sp);
     if (mx) this.player.setFlipX(mx < 0);
+    if (mx || my) this.player.play('a_player', true);
+    else this.player.stop().setFrame(0);
 
     const run = this.run;
     if (run.stats.regen > 0 && run.hp < run.stats.maxHp) {
@@ -290,8 +283,10 @@ export class ArenaScene extends Phaser.Scene {
     if (!e) return;
     const sc = enemyScale(this.run.wave);
     e.enableBody(true, x, y, true, true);
-    e.setTexture('e_' + type).setDepth(5).clearTint();
-    e.body.setCircle(def.r, 3, 3);
+    e.setTexture('e_' + type, 0).setDepth(5).clearTint();
+    e.play('a_' + type);
+    e.anims.setProgress(Math.random());
+    e.body.setCircle(def.r, e.width / 2 - def.r, e.height / 2 - def.r);
     e.setCollideWorldBounds(true);
     e.hp = Math.round(def.hp * sc.hp);
     e.dmg = def.dmg + sc.dmg;

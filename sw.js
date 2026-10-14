@@ -1,16 +1,18 @@
 // 離線快取：第一次開啟後，沒有網路也能玩。
 // 修改任何檔案後，請把 VERSION 加 1，玩家下次開啟就會拿到新版。
-const VERSION = 14;
+const VERSION = 15;
 const CACHE = `wordgame-v${VERSION}`;
 const ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
+  'fonts/PixelifySans.woff2',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon.svg',
   'lib/phaser-arcade-physics.min.js',
+  'src/art/pixel.js',
   'src/data/enemies.js',
   'src/data/items.js',
   'src/data/weapons.js',
@@ -44,7 +46,10 @@ self.addEventListener('activate', event => {
 // 先用快取（快），同時在背景抓新版存起來
 self.addEventListener('fetch', event => {
   const req = event.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  // 分支預覽（preview/ 底下）不走正式版的快取
+  if (url.pathname.includes('/preview/')) return;
   event.respondWith(caches.open(CACHE).then(async cache => {
     const cached = await cache.match(req, { ignoreSearch: true });
     const network = fetch(req).then(res => {
