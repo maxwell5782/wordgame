@@ -7,7 +7,7 @@ export const GAME_W = 1280;
 export const GAME_H = 720;
 const ARENA = new Phaser.Geom.Rectangle(40, 40, 1200, 640);
 const WARN_TIME = 0.8;
-const INVULN_TIME = 0.6;
+const INVULN_TIME = 0.8;
 const BASE_PICKUP = 70;
 
 export class ArenaScene extends Phaser.Scene {
@@ -220,7 +220,7 @@ export class ArenaScene extends Phaser.Scene {
     // 最後 1 秒不再出怪
     if (this.elapsed < this.waveTime - 1) {
       this.spawnAcc += dt;
-      const interval = Math.max(0.45, 1.8 - wave * 0.13);
+      const interval = Math.max(0.6, 1.8 - wave * 0.12);
       if (this.spawnAcc >= interval) {
         this.spawnAcc -= interval;
         this.queueSpawnGroup();
@@ -239,7 +239,7 @@ export class ArenaScene extends Phaser.Scene {
 
   queueSpawnGroup() {
     const wave = this.run.wave;
-    const cap = Math.min(200, 40 + wave * 16);
+    const cap = Math.min(150, 30 + wave * 12);
     const pending = this.warns.countActive(true);
     if (this.enemies.countActive(true) + pending >= cap) return;
 
@@ -251,7 +251,7 @@ export class ArenaScene extends Phaser.Scene {
       cy = Phaser.Math.Between(ARENA.y + 60, ARENA.bottom - 60);
       if (Phaser.Math.Distance.Between(cx, cy, this.player.x, this.player.y) > 320) break;
     }
-    const n = 1 + Math.floor(wave / 3) + Math.floor(this.elapsed / 20) + (Math.random() < 0.5 ? 1 : 0);
+    const n = 1 + Math.floor(wave / 4) + Math.floor(this.elapsed / 25) + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < n; i++) {
       const w = this.warns.get(cx + Phaser.Math.Between(-50, 50), cy + Phaser.Math.Between(-50, 50), 'warn');
       if (!w) return;

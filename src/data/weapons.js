@@ -3,7 +3,7 @@
 export const WEAPONS = {
   pistol: {
     name: '手槍', icon: '🔫', desc: '穩定的單發射擊，什麼距離都好用。', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
-    baseCost: 12, damage: 10, cooldown: 0.9, range: 420, bulletSpeed: 950,
+    baseCost: 12, damage: 12, cooldown: 0.9, range: 420, bulletSpeed: 950,
     pellets: 1, spread: 0, pierce: 0,
   },
   shotgun: {
