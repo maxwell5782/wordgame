@@ -6,6 +6,7 @@ import { KeyboardMove } from '../input/keyboard.js';
 import { makeArenaTexture } from '../art/pixel.js';
 import { BOSSES, bossForWave, BOSS_ENRAGE_TIME, BOSS_ENRAGE_SPEED, BOSS_ENRAGE_CD, BOSS_WAVE_SPAWN_SLOW, BOSS_WAVE_ENEMY_CAP } from '../data/bosses.js';
 import { markGearSeen } from '../progress.js';
+import { sfx, playMusic, stopMusic } from '../audio.js';
 
 export const GAME_W = 1280;
 export const GAME_H = 720;
@@ -104,6 +105,8 @@ export class ArenaScene extends Phaser.Scene {
     this.hintTime = run.wave === 1 || this.bossId ? 3 : 1.5;
     this.hint.setVisible(true).setAlpha(1);
     this.pushHud();
+    playMusic(this.bossId ? 'boss' : 'battle');
+    sfx(this.bossId ? 'bossWarn' : 'wave');
   }
 
   nextWave() {
@@ -156,6 +159,8 @@ export class ArenaScene extends Phaser.Scene {
     this.physics.pause();
     this.joy.reset();
     this.player.stop().setFrame(0).setTint(0x555555);
+    stopMusic();
+    sfx('death');
     this.pushHud();
     this.time.delayedCall(900, () => this.hooks.onDeath());
   }
@@ -178,6 +183,8 @@ export class ArenaScene extends Phaser.Scene {
     this.paused = false;
     this.physics.resume();
     this.cameras.main.flash(250, 255, 255, 255);
+    sfx('revive');
+    playMusic(this.bossId ? 'boss' : 'battle');
     this.showFloat(px, py - 40, '接關！', '#7dff9a');
     this.pushHud();
   }
@@ -190,6 +197,7 @@ export class ArenaScene extends Phaser.Scene {
       const st = weaponStats(w, stats);
       return {
         st,
+        id: w.id,
         cd: Math.random() * st.cooldown,
         spr: this.add.image(0, 0, st.tex).setTint(RARITY[w.tier].color).setDepth(11),
       };
@@ -589,6 +597,7 @@ export class ArenaScene extends Phaser.Scene {
     this.warns.children.iterate(w => { if (w.active) w.setActive(false).setVisible(false); });
     this.enemies.children.iterate(e => { if (e.active) this.killEnemy(e); });
     this.cameras.main.flash(400, 255, 240, 180);
+    sfx('bossKill');
     this.cameras.main.shake(500, 0.012);
     this.boomFx(x, y, 160, 0xffd84d);
     this.hint.setText('🎉 打倒魔王了！').setVisible(true).setAlpha(1);
@@ -639,6 +648,7 @@ export class ArenaScene extends Phaser.Scene {
     const sy = slot.spr.y;
     const ang = Phaser.Math.Angle.Between(sx, sy, target.x, target.y);
     slot.spr.setRotation(ang).setFlipY(Math.abs(ang) > Math.PI / 2);
+    sfx(slot.id);
     for (let i = 0; i < st.pellets; i++) {
       const spread = st.pellets > 1 ? (i / (st.pellets - 1) - 0.5) * st.spread : 0;
       const a = ang + spread + Phaser.Math.FloatBetween(-0.04, 0.04);
@@ -685,6 +695,7 @@ export class ArenaScene extends Phaser.Scene {
     e.y += Math.sin(a) * kb;
     this.showFloat(e.x, e.y - 18, String(b.dmg), '#ffffff');
     if (e.hp <= 0) this.killEnemy(e);
+    else sfx('hit');
     b.pierce -= 1;
     if (b.pierce < 0) b.disableBody(true, true);
   }
@@ -693,6 +704,7 @@ export class ArenaScene extends Phaser.Scene {
   explode(x, y, radius, dmg, kb, color) {
     this.boomFx(x, y, radius, color);
     this.cameras.main.shake(80, 0.003);
+    sfx('explode');
     const hit = [];
     this.enemies.children.iterate(e => {
       if (!e.active || !e.body.enable) return;
@@ -727,6 +739,7 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y, drop } = e;
     const wasBoss = e.boss;
     e.disableBody(true, true);
+    if (!wasBoss) sfx('kill');
     // 魔王掉的材料撒得比較開
     const spread = wasBoss ? 70 : 12;
     for (let i = 0; i < drop; i++) {
@@ -751,6 +764,7 @@ export class ArenaScene extends Phaser.Scene {
     this.run.hp -= dmg;
     this.invuln = INVULN_TIME;
     this.cameras.main.shake(120, 0.006);
+    sfx('hurt');
     this.showFloat(p.x, p.y - 30, `-${Math.round(dmg * 10) / 10}`, '#ff6b6b');
     return true;
   }
@@ -784,7 +798,9 @@ export class ArenaScene extends Phaser.Scene {
       m.x += dx / d * s;
       m.y += dy / d * s;
     });
+    if (got) sfx('pickup');
     if (got && addMaterials(this.run, got) > 0) {
+      sfx('levelup');
       this.showFloat(px, py - 44, 'LEVEL UP!', '#ffd84d', 1.2);
     }
   }
