@@ -271,3 +271,65 @@ button.chip { cursor: pointer; }
 .review-last { text-align: center; font-weight: 800; padding: 8px; border-radius: 10px; background: var(--panel2); }
 .review-last.good { color: var(--good); }
 .review-empty { text-align: center; padding: 24px 0; font-size: 16px; }
+
+/* ---------- 像素風外觀 ----------
+   方角、粗外框、硬陰影，和遊戲裡的像素圖一致。
+   像素字 Pixelify Sans 小字時不好認（1 像 7、8 像 3），所以只用在大的倒數計時和材料數；
+   其他文字、血量、價錢、題目裡的英文單字都維持清楚的一般字體。 */
+:root {
+  --px: 3px;
+  --outline: #0b0e20;
+  --pixel-font: "Pixelify Sans", system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+#ui *, #hud *, .toast, #rotate-hint { border-radius: 0 !important; }
+
+.screen {
+  background-color: rgba(10, 12, 30, .94);
+  background-image:
+    linear-gradient(45deg, #ffffff06 25%, transparent 25%, transparent 75%, #ffffff06 75%),
+    linear-gradient(45deg, #ffffff06 25%, transparent 25%, transparent 75%, #ffffff06 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+.screen.modal { background-image: none; }
+
+.card, .stat-box, .reroll, .toast {
+  border-width: var(--px);
+  box-shadow: 0 0 0 var(--px) var(--outline), 0 calc(var(--px) * 3) 0 var(--px) #0007;
+}
+
+.btn {
+  border-width: var(--px);
+  box-shadow: 0 var(--px) 0 var(--outline);
+  transition: transform .05s, box-shadow .05s, filter .1s;
+}
+.btn:active:not(:disabled) { transform: translateY(var(--px)); box-shadow: 0 0 0 var(--outline); }
+.btn.primary { box-shadow: 0 var(--px) 0 #6b4f00, inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #e0a800; }
+.btn.primary:active:not(:disabled) { box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #e0a800; }
+
+.offer {
+  border-width: var(--px);
+  box-shadow: 0 0 0 var(--px) var(--outline), 0 calc(var(--px) * 2) 0 var(--px) #0007;
+}
+.offer.picking, .inv-weapon.picking { box-shadow: 0 0 0 var(--px) var(--good), 0 0 0 calc(var(--px) * 2) var(--outline); }
+
+.menu h1, .results h1 {
+  text-shadow: var(--px) 0 0 #6b4f00, 0 var(--px) 0 #6b4f00, var(--px) var(--px) 0 #6b4f00,
+    calc(var(--px) * 2) calc(var(--px) * 2) 0 var(--outline);
+  letter-spacing: .04em;
+}
+
+/* HUD：像素字、方形血條（分格） */
+#hud { text-shadow: 2px 0 0 var(--outline), -2px 0 0 var(--outline), 0 2px 0 var(--outline), 0 -2px 0 var(--outline); }
+.bar { border: var(--px) solid var(--outline); background: #0009; }
+.bar .fill { transition: none; }
+.bar.hp .fill { background: linear-gradient(#ff8a8a 0 30%, #e04848 30% 75%, #a82a3a 75%); }
+.bar.xp .fill { background: linear-gradient(#a6ffd0 0 35%, #2fb36b 35%); }
+.bar::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 14px, #0004 14px 16px);
+}
+.bar span { z-index: 1; }
+#timer-text { font-family: var(--pixel-font); letter-spacing: .05em; }
+
+#hud .mats, .mats.big { font-family: var(--pixel-font); }

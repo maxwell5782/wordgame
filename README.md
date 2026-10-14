@@ -52,7 +52,7 @@ src/main.js             遊戲流程：主選單 → 波次 → 升級 → 商�
 src/scenes/ArenaScene.js  戰鬥場景：移動、出怪、武器、子彈、材料
 src/scenes/BootScene.js   用程式畫出所有圖形（不需要圖片檔）
 src/art/pixel.js        原創像素圖（角色、敵人、武器）和草地／石牆地圖
-fonts/                  像素字型 Pixelify Sans（OFL 授權，傷害數字用）
+fonts/                  像素字型 Pixelify Sans（OFL 授權，倒數計時和材料數用）
 src/input/joystick.js   浮動虛擬搖桿
 src/ui/shop.js          商店、合成、鎖定、答題重骰
 src/ui/quiz.js          三種難度的英文題目
