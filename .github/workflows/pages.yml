@@ -50,11 +50,12 @@ jobs:
           fi
           slug=$(printf '%s' "$REF_NAME" | tr -c 'A-Za-z0-9._-' '-')
 
+          # 用 --checksum 比對內容：只改數字的檔案大小不變、時間又落在同一秒時，rsync 預設會誤判成沒變而漏更新
           # 主分支永遠放在根目錄（preview/ 不動）
-          rsync -a --delete --exclude .git --exclude .github --exclude preview --exclude .nojekyll main/ site/
+          rsync -a --checksum --delete --exclude .git --exclude .github --exclude preview --exclude .nojekyll main/ site/
           if [ "$EVENT" = push ] && [ "$REF_NAME" != "$DEFAULT" ]; then
             mkdir -p "site/preview/$slug"
-            rsync -a --delete --exclude .git --exclude .github branch/ "site/preview/$slug/"
+            rsync -a --checksum --delete --exclude .git --exclude .github branch/ "site/preview/$slug/"
           fi
           if [ "$EVENT" = delete ] && [ "$REF_TYPE" = branch ]; then
             rm -rf "site/preview/$slug"

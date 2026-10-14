@@ -3,13 +3,13 @@
 export const WEAPONS = {
   pistol: {
     name: '手槍', icon: '🔫', desc: '穩定的單發射擊，什麼距離都好用。', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
-    baseCost: 12, damage: 10, cooldown: 0.9, range: 420, bulletSpeed: 950,
+    baseCost: 12, damage: 11, cooldown: 0.9, range: 420, bulletSpeed: 950,
     pellets: 1, spread: 0, pierce: 0, knockback: 10,
   },
   shotgun: {
     name: '散彈槍', icon: '💥', desc: '近距離一次射出好幾發，每升一階多 1 發。', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
     baseCost: 20, damage: 4, cooldown: 1.45, range: 300, bulletSpeed: 850,
-    pellets: 3, spread: 0.55, pierce: 0, knockback: 10,
+    pellets: 5, spread: 0.55, pierce: 0, knockback: 10,
   },
   knife: {
     name: '飛刀', icon: '🗡️', desc: '出手很快又能穿透敵人，每升一階多穿透 1 隻。', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
@@ -18,7 +18,7 @@ export const WEAPONS = {
   },
   bazooka: {
     name: '火箭炮', icon: '🧨', desc: '要等很久才射一發，碰到敵人就爆炸，範圍內的敵人全部受傷。每升一階爆炸範圍變大。', tex: 'w_bazooka', bulletTex: 'rocket', color: 0xff5e3a,
-    baseCost: 24, damage: 20, cooldown: 3.2, range: 450, bulletSpeed: 520,
+    baseCost: 24, damage: 20, cooldown: 2.9, range: 450, bulletSpeed: 520,
     pellets: 1, spread: 0, pierce: 0, knockback: 25, blast: 80,
   },
 };

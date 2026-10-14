@@ -26,7 +26,10 @@ export function formatStat(key, value) {
   return `${sign}${value}${s.pct ? '%' : ''} ${s.name}`;
 }
 
-export function newRun(topic, wordLevel) {
+// 開局可以選的起始武器
+export const START_WEAPONS = ['pistol', 'shotgun', 'knife'];
+
+export function newRun(topic, wordLevel, startWeapon = 'pistol') {
   return {
     topic,
     wordLevel,
@@ -37,7 +40,8 @@ export function newRun(topic, wordLevel) {
     xp: 0,
     pendingLevels: 0,
     stats: { maxHp: 15, regen: 0, damage: 0, atkSpeed: 0, speed: 0, armor: 0, pickup: 0 },
-    weapons: [{ id: 'pistol', tier: 0 }],
+    startWeapon: START_WEAPONS.includes(startWeapon) ? startWeapon : 'pistol',
+    weapons: [{ id: START_WEAPONS.includes(startWeapon) ? startWeapon : 'pistol', tier: 0 }],
     items: {},
     shop: { slots: [], rerolls: 0 },
     quiz: { asked: 0, correct: 0, learned: new Set(), missed: new Set() },
