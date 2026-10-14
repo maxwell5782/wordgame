@@ -17,7 +17,7 @@ export const WEAPONS = {
     pellets: 1, spread: 0, pierce: 1, knockback: 10,
   },
   bazooka: {
-    name: '火箭炮', icon: '🧨', desc: '要等很久才射一發，碰到敵人就爆炸，範圍內的敵人全部受傷。每升一階爆炸範圍變大。', tex: 'w_bazooka', bulletTex: 'rocket', color: 0xff5e3a,
+    name: '火箭炮', icon: '🧨', desc: '要等很久才射一發，碰到敵人或飛到最遠就爆炸，範圍內的敵人全部受傷。每升一階爆炸範圍變大。', tex: 'w_bazooka', bulletTex: 'rocket', color: 0xff5e3a,
     baseCost: 24, damage: 20, cooldown: 2.9, range: 450, bulletSpeed: 520,
     pellets: 1, spread: 0, pierce: 0, knockback: 25, blast: 80,
   },

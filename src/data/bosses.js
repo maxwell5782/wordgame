@@ -30,7 +30,7 @@ export const BOSSES = {
   fire_dragon: {
     name: '火焰魔龍', icon: '🐉', wave: 10, tex: 'b_fire_dragon', color: 0xff5e3a,
     desc: '最後的魔王。會噴火、從天上叫來隕石，還會突然直線衝過來。',
-    hp: 3400, r: 60, speed: 85, dmg: 6, drop: 0, cooldown: 2.2,
+    hp: 10200, r: 60, speed: 128, dmg: 6, drop: 0, cooldown: 2.2,
     attacks: [
       { type: 'fan', name: '火焰吐息', count: 7, spread: 70, bursts: 4, speed: 340, dmg: 4, color: 0xff7a3a },
       { type: 'dash', name: '猛龍衝撞', warn: 0.8, speed: 750, dist: 520, dmg: 8 },
