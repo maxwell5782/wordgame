@@ -63,6 +63,7 @@ const hooks = {
 async function waveQuiz() {
   const kind = canSpeak() ? 'listen' : 'easy';
   const correct = await openQuiz(kind, run, {
+    reward: `這一波傷害 +${LISTEN_WAVE_DAMAGE}%（答錯沒有加成）`,
     resultNote: ok => ok ? `這一波傷害 +${LISTEN_WAVE_DAMAGE}%！` : '這一波沒有加成，這個字會放進複習清單。',
   });
   run.waveDamage = correct ? LISTEN_WAVE_DAMAGE : 0;

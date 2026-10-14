@@ -110,9 +110,9 @@ function speakButton(word) {
 }
 
 // 回傳 Promise<boolean>：答對 true，答錯 false
-// resultNote(correct) 可以換掉答題後的說明文字（預設是重骰用的說明）
+// reward：題目畫面上寫的「答對可以得到什麼」（給 null 就不顯示）；resultNote(correct)：答題後的說明文字（兩個預設都是重骰用的）
 // word 指定要考哪個字（複習練習用）；quitLabel 有給的話會多一個中途離開的按鈕，按了 resolve(null)
-export function openQuiz(difficulty, run, { resultNote, word: fixedWord, quitLabel } = {}) {
+export function openQuiz(difficulty, run, { reward, resultNote, word: fixedWord, quitLabel } = {}) {
   return new Promise(resolve => {
     // 困難題避開太長的字
     const filter = difficulty === 'hard' ? w => w.en.length <= 7 : () => true;
@@ -199,6 +199,7 @@ export function openQuiz(difficulty, run, { resultNote, word: fixedWord, quitLab
     const card = el('div', { class: 'card quiz' },
       quitLabel ? el('button', { class: 'btn quiz-quit', type: 'button', onclick: () => { unmount('quiz'); resolve(null); } }, quitLabel) : null,
       el('div', { class: `quiz-tag d-${difficulty}` }, `${diff.name}題 · ${diff.desc}`),
+      reward === null ? null : el('div', { class: 'quiz-reward' }, `🎁 答對：${reward ?? (diff.guarantee ? `重骰保證出現${diff.guarantee === 1 ? '藍裝 🔵' : '紫裝 🟣'}` : '重骰商店')}`),
       body);
     mount(el('div', { class: 'screen modal' }, card), 'quiz');
   });

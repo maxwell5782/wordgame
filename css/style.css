@@ -178,6 +178,7 @@ button.chip { cursor: pointer; }
 
 /* ---------- 題目 ---------- */
 .quiz { text-align: center; width: min(620px, 100%); }
+.quiz-reward { color: var(--accent); font-weight: 800; font-size: clamp(15px, 3vh, 18px); margin-bottom: 4px; }
 .quiz-quit { display: block; margin: 0 0 4px auto; min-height: 32px; padding: 4px 10px; font-size: 13px; }
 .quiz-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 800; border: 2px solid; margin-bottom: 6px; }
 .prompt { font-size: clamp(18px, 4vh, 24px); font-weight: 800; margin: 4px 0; }
