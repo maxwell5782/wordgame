@@ -4,7 +4,7 @@ import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from
 import { ITEMS, itemDesc } from '../data/items.js';
 import { RARITY, STATS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
 import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
-import { speak, canSpeak } from '../speech.js';
+import { speak, canSpeak, getEnglishVoices, getVoice, isAutoVoice, setVoice, onVoicesChanged } from '../speech.js';
 import { el, mount, unmount, shuffle } from './dom.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
 
@@ -42,6 +42,7 @@ export function showMenu({ onStart }) {
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('words') }, `📖 單字圖鑑 ${coll.size}/${WORDS.length}`),
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, `⚔️ 武器道具圖鑑 ${gearSeenCount()}/${GEAR_TOTAL}`),
         el('button', { class: `btn ${review ? 'review-btn' : ''}`, type: 'button', onclick: () => showReview({ onClose: render }) }, `📝 複習單字 ${review}`),
+        canSpeak() ? el('button', { class: 'btn', type: 'button', onclick: showVoices }, '🔊 發音') : null,
       ),
       el('p', { class: 'help' }, '移動：按住畫面任意處拖曳（電腦也可以用 WASD 或方向鍵）。武器會自動攻擊。'),
     ));
@@ -225,6 +226,45 @@ export function showReview({ onClose } = {}) {
   };
   render();
   mount(el('div', { class: 'screen modal' }, card), 'review');
+}
+
+// 選擇唸單字的聲音：每台裝置內建的聲音不同，有些唸起來很怪，可以在這裡換
+const VOICE_SAMPLES = ['camera', 'banana', 'elephant', 'computer'];
+
+export function showVoices() {
+  const card = el('div', { class: 'card codex voices' });
+  let sample = 0;
+  const off = onVoicesChanged(() => render());
+  const close = () => { off(); unmount('voices'); };
+  const test = () => { speak(VOICE_SAMPLES[sample]); sample = (sample + 1) % VOICE_SAMPLES.length; };
+  const render = () => {
+    const voices = getEnglishVoices();
+    const cur = getVoice();
+    const auto = isAutoVoice();
+    card.replaceChildren(
+      el('div', { class: 'shop-head' },
+        el('div', { class: 'title' }, '🔊 選擇發音'),
+        el('button', { class: 'btn', type: 'button', onclick: close }, '關閉'),
+      ),
+      el('div', { class: 'codex-body' },
+        el('p', { class: 'help' }, '發音是用這台裝置內建的英文聲音。如果聽起來怪怪的，換一個聲音試試看，點一下就會唸「camera」等單字。'),
+        el('button', { class: 'btn primary', type: 'button', onclick: test }, `▶ 試聽（目前：${cur ? cur.name : '系統預設'}）`),
+        el('div', { class: 'voice-list' },
+          el('button', {
+            class: `btn chip-btn ${auto ? 'on' : ''}`, type: 'button',
+            onclick: () => { setVoice(null); test(); },
+          }, `⭐ 自動挑選${auto && cur ? `（${cur.name}）` : ''}`),
+          voices.map(v => el('button', {
+            class: `btn chip-btn ${!auto && v === cur ? 'on' : ''}`, type: 'button',
+            onclick: () => { setVoice(v.voiceURI); test(); },
+          }, `${v.name} · ${v.lang}`)),
+        ),
+        voices.length ? null : el('p', { class: 'help' }, '這台裝置沒有找到英文聲音，會用系統預設的聲音唸。'),
+      ),
+    );
+  };
+  render();
+  mount(el('div', { class: 'screen modal' }, card), 'voices');
 }
 
 function rollLevelTier(level) {
