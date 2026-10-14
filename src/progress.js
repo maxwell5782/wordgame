@@ -1,9 +1,11 @@
-// 學習紀錄（存在這台裝置的瀏覽器裡）：答錯的單字進複習清單，答對過的單字進圖鑑。
+// 學習紀錄（存在這台裝置的瀏覽器裡）：答錯的單字進複習清單，答對過的單字進圖鑑，
+// 在商店看過的武器和道具進裝備圖鑑。
 import { wordsForTopic } from './data/words.js';
 
 const KEY_REVIEW = 'wordgame.review';
 const KEY_COLLECTION = 'wordgame.collection';
 const KEY_TOPIC = 'wordgame.topic';
+const KEY_SEEN_GEAR = 'wordgame.seenGear';
 
 function load(key, fallback) {
   try {
@@ -26,9 +28,23 @@ function save(key, value) {
 const review = load(KEY_REVIEW, {});
 const collection = new Set(load(KEY_COLLECTION, []));
 const recent = [];
+// 看過的武器／道具，格式為 'weapon:pistol'、'item:snack'
+const seenGear = new Set(load(KEY_SEEN_GEAR, []));
+
 
 export function getCollection() {
   return collection;
+}
+
+export function hasSeenGear(kind, id) {
+  return seenGear.has(`${kind}:${id}`);
+}
+
+export function markGearSeen(kind, id) {
+  const key = `${kind}:${id}`;
+  if (seenGear.has(key)) return;
+  seenGear.add(key);
+  save(KEY_SEEN_GEAR, [...seenGear]);
 }
 
 export function getReviewWords() {

@@ -1,3 +1,5 @@
+import { formatStat } from '../state.js';
+
 // 道具：買了就永久加能力，可以重複購買疊加。tier 0~3 = 白、藍、紫、金。
 export const ITEMS = [
   { id: 'snack', name: '小點心', icon: '🍪', tier: 0, effects: { maxHp: 3 } },
@@ -21,4 +23,8 @@ export const ITEM_COST = [14, 30, 60, 110];
 
 export function findItem(id) {
   return ITEMS.find(i => i.id === id);
+}
+
+export function itemDesc(item) {
+  return Object.entries(item.effects).map(([k, v]) => formatStat(k, v)).join('、');
 }

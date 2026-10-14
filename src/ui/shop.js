@@ -1,8 +1,10 @@
 // 每波結束後的商店：買武器和道具、鎖定商品、答題重骰。
 import { WEAPONS, WEAPON_IDS, MAX_WEAPONS, weaponStats, weaponBaseCost } from '../data/weapons.js';
-import { ITEMS, ITEM_COST, findItem } from '../data/items.js';
-import { RARITY, STATS, applyEffects, formatStat, priceForWave } from '../state.js';
+import { ITEMS, ITEM_COST, findItem, itemDesc } from '../data/items.js';
+import { RARITY, STATS, applyEffects, priceForWave } from '../state.js';
 import { DIFFICULTY, openQuiz } from './quiz.js';
+import { quitButton } from './screens.js';
+import { markGearSeen } from '../progress.js';
 import { el, mount, toast } from './dom.js';
 
 const SLOT_COUNT = 4;
@@ -44,6 +46,7 @@ function rollSlots(run, guarantee = 0) {
   if (guarantee > 0 && fresh.length && !fresh.some(i => slots[i].offer.tier >= guarantee)) {
     slots[pick(fresh)].offer = makeOffer(guarantee);
   }
+  for (const i of fresh) markGearSeen(slots[i].offer.kind, slots[i].offer.id);
 }
 
 function rerollCost(run) {
@@ -59,10 +62,6 @@ function weaponDesc(w, run) {
   return parts.join(' · ');
 }
 
-function itemDesc(item) {
-  return Object.entries(item.effects).map(([k, v]) => formatStat(k, v)).join('、');
-}
-
 function tryAddWeapon(run, id, tier) {
   if (run.weapons.length < MAX_WEAPONS) {
     run.weapons.push({ id, tier });
@@ -76,7 +75,7 @@ function tryAddWeapon(run, id, tier) {
   return null;
 }
 
-export function openShop(run, onNext) {
+export function openShop(run, onNext, onQuit) {
   run.shop.rerolls = 0;
   rollSlots(run);
 
@@ -187,7 +186,10 @@ export function openShop(run, onNext) {
       el('div', { class: 'shop-head' },
         el('div', { class: 'title' }, `第 ${run.wave} 波完成！`),
         el('div', { class: 'mats big' }, `💎 ${run.materials}`),
-        el('button', { class: 'btn primary', type: 'button', disabled: busy, onclick: () => onNext() }, '下一波 ▶'),
+        el('div', { class: 'row tight' },
+          quitButton(onQuit, busy),
+          el('button', { class: 'btn primary', type: 'button', disabled: busy, onclick: () => onNext() }, '下一波 ▶'),
+        ),
       ),
       el('div', { class: 'offers' }, run.shop.slots.map(offerCard)),
       el('div', { class: 'reroll' },

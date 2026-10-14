@@ -1,17 +1,17 @@
 // 武器資料。tier 0~3 = 白、藍、紫、金，兩把同名同階武器可以合成下一階。
 export const WEAPONS = {
   pistol: {
-    name: '手槍', icon: '🔫', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
+    name: '手槍', icon: '🔫', desc: '穩定的單發射擊，什麼距離都好用。', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
     baseCost: 12, damage: 10, cooldown: 0.9, range: 420, bulletSpeed: 750,
     pellets: 1, spread: 0, pierce: 0,
   },
   shotgun: {
-    name: '散彈槍', icon: '💥', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
+    name: '散彈槍', icon: '💥', desc: '近距離一次射出好幾發，每升一階多 1 發。', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
     baseCost: 20, damage: 5, cooldown: 1.3, range: 300, bulletSpeed: 650,
     pellets: 4, spread: 0.55, pierce: 0,
   },
   knife: {
-    name: '飛刀', icon: '🗡️', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
+    name: '飛刀', icon: '🗡️', desc: '出手很快又能穿透敵人，每升一階多穿透 1 隻。', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
     baseCost: 16, damage: 8, cooldown: 0.55, range: 260, bulletSpeed: 900,
     pellets: 1, spread: 0, pierce: 1,
   },

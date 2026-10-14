@@ -203,6 +203,20 @@ button.chip { cursor: pointer; }
 .codex-word.has { opacity: 1; color: var(--text); border-color: var(--good); cursor: pointer; }
 .codex-word .emoji { font-size: 26px; }
 .codex-word small { font-size: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.gear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin-top: 6px; }
+.gear-card { display: flex; gap: 10px; align-items: flex-start; padding: 10px; background: var(--panel2); border: 2px solid var(--rc, var(--line)); border-radius: 12px; }
+.gear-card .icon { font-size: 34px; line-height: 1; }
+.gear-card .name { font-weight: 800; font-size: 16px; }
+.gear-card .desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.gear-card.locked { opacity: .5; border-style: dashed; }
+.gear-body { flex: 1; min-width: 0; }
+.tier-table { width: 100%; margin-top: 6px; border-collapse: collapse; font-size: 12px; }
+.tier-table th { text-align: left; color: var(--muted); font-weight: 700; padding: 2px 4px; }
+.tier-table td { padding: 2px 4px; border-top: 1px solid var(--line); }
+.tier-table .tier-name { color: var(--rc); font-weight: 800; }
+.row.tight { margin-top: 0; }
+.btn.armed { border-color: var(--bad); color: var(--bad); }
 
 .pause { display: grid; gap: 12px; width: min(360px, 100%); text-align: center; }
 .levelup { text-align: center; }
