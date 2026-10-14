@@ -24,9 +24,10 @@ export function formatStat(key, value) {
   return `${sign}${value}${s.pct ? '%' : ''} ${s.name}`;
 }
 
-export function newRun(topic) {
+export function newRun(topic, wordLevel) {
   return {
     topic,
+    wordLevel,
     wave: 1,
     hp: 15,
     materials: 0,

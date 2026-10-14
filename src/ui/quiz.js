@@ -115,7 +115,7 @@ export function openQuiz(difficulty, run, { resultNote } = {}) {
   return new Promise(resolve => {
     // 困難題避開太長的字
     const filter = difficulty === 'hard' ? w => w.en.length <= 7 : () => true;
-    const word = pickWord(run.topic, filter);
+    const word = pickWord(run.topic, run.wordLevel, filter);
     const diff = DIFFICULTY[difficulty] ?? OTHER_QUIZ[difficulty];
 
     const finish = correct => {
