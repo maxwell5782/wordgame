@@ -49,12 +49,12 @@ html, body {
 }
 #hud[hidden] { display: none; }
 .hud-left { display: grid; gap: 4px; width: min(36vw, 240px); }
-.bar { position: relative; height: clamp(16px, 3.2vh, 24px); background: #0008; border: 2px solid #000a; border-radius: 8px; overflow: hidden; }
+.bar { position: relative; height: clamp(20px, 3.2vh, 24px); background: #0008; border: 2px solid #000a; border-radius: 8px; overflow: hidden; }
 .bar .fill { position: absolute; inset: 0 auto 0 0; width: 0; transition: width .1s; }
 .bar.hp .fill { background: linear-gradient(#ff6b6b, #d63b3b); }
 .bar.xp { height: clamp(10px, 2vh, 14px); }
 .bar.xp .fill { background: linear-gradient(#7cf0b0, #2fb36b); }
-.bar span { position: relative; padding-left: 8px; font-size: clamp(11px, 2.3vh, 15px); line-height: clamp(12px, 2.6vh, 20px); }
+.bar span { position: absolute; inset: 0; display: flex; align-items: center; padding-left: 8px; font-size: clamp(11px, 2.3vh, 15px); line-height: 1; white-space: nowrap; }
 .mats { font-size: clamp(14px, 3vh, 20px); }
 .mats .lv { margin-left: 10px; color: #7cf0b0; }
 .hud-center { text-align: center; }
@@ -179,6 +179,7 @@ button.chip { cursor: pointer; }
 /* ---------- 題目 ---------- */
 .quiz { text-align: center; width: min(620px, 100%); }
 .quiz-reward { color: var(--accent); font-weight: 800; font-size: clamp(15px, 3vh, 18px); margin-bottom: 4px; }
+.quiz-quit { display: block; margin: 0 0 4px auto; min-height: 32px; padding: 4px 10px; font-size: 13px; }
 .quiz-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 800; border: 2px solid; margin-bottom: 6px; }
 .prompt { font-size: clamp(18px, 4vh, 24px); font-weight: 800; margin: 4px 0; }
 .picture { font-size: clamp(56px, 16vh, 110px); line-height: 1.1; }
@@ -253,3 +254,12 @@ button.chip { cursor: pointer; }
 .replace-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; padding: 8px 10px; border: 2px dashed var(--good); border-radius: 10px; font-size: 14px; font-weight: 700; }
 .offer.picking, .inv-weapon.picking { box-shadow: 0 0 0 3px var(--good); }
 .rules { margin-top: 6px; font-size: 0.85em; opacity: 0.75; }
+
+/* 複習單字 */
+.btn.review-btn { border-color: var(--bad); }
+.review .btn.huge { display: block; margin: 10px auto 14px; }
+.codex-word.review-word { border-color: var(--bad); }
+.review-word .left { color: var(--bad); font-weight: 700; }
+.review-last { text-align: center; font-weight: 800; padding: 8px; border-radius: 10px; background: var(--panel2); }
+.review-last.good { color: var(--good); }
+.review-empty { text-align: center; padding: 24px 0; font-size: 16px; }

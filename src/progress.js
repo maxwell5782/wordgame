@@ -52,6 +52,11 @@ export function getReviewWords() {
   return Object.keys(review);
 }
 
+// 這個字還要再答對幾次才會移出複習清單（不在清單裡就是 0）
+export function reviewRemaining(en) {
+  return review[en] ?? 0;
+}
+
 export function getSavedTopic() {
   return load(KEY_TOPIC, null);
 }
