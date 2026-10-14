@@ -97,7 +97,13 @@ export function showPause({ onResume, onQuit }) {
       el('button', { class: 'btn primary huge', type: 'button', onclick: () => { unmount('pause'); onResume(); } }, '▶ 繼續'),
       el('button', {
         class: 'btn', type: 'button',
-        onclick: () => { if (confirm('確定要放棄這一局，回到主選單嗎？')) { unmount('pause'); onQuit(); } },
+        // 按兩次才離開，避免小朋友誤觸
+        onclick: e => {
+          const b = e.currentTarget;
+          if (b.dataset.armed) { unmount('pause'); onQuit(); return; }
+          b.dataset.armed = '1';
+          b.textContent = '再按一次放棄這局';
+        },
       }, '回主選單'),
     ));
   mount(screen, 'pause');
