@@ -19,9 +19,12 @@ export function pickEnemyType(wave) {
   return 'slime';
 }
 
+// 一般敵人血量整體倍率（魔王另外在 bosses.js 設定，不受影響）
+export const ENEMY_HP_MULT = 0.9;
+
 export function enemyScale(wave) {
   return {
-    hp: 1 + 0.4 * (wave - 1),
+    hp: ENEMY_HP_MULT * (1 + 0.4 * (wave - 1)),
     dmg: Math.floor((wave - 1) / 3),
     speed: 1 + 0.02 * (wave - 1),
   };
