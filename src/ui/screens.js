@@ -1,18 +1,24 @@
 // 主選單、升級、暫停、結算、圖鑑（單字／武器／道具）等畫面
-import { WORDS, TOPICS, ALL_TOPICS, wordsForTopic, findWord } from '../data/words.js';
+import { WORDS, TOPICS, ALL_TOPICS, LEVELS, ALL_LEVELS, wordsForTopic, findWord } from '../data/words.js';
 import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, itemDesc } from '../data/items.js';
 import { RARITY, STATS, MAX_WAVES, applyEffects, formatStat } from '../state.js';
-import { getCollection, getReviewWords, getSavedTopic, saveTopic, hasSeenGear } from '../progress.js';
+import { getCollection, getReviewWords, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
 import { speak } from '../speech.js';
 import { el, mount, unmount } from './dom.js';
 
 export function showMenu({ onStart }) {
   let topic = getSavedTopic();
   if (topic !== ALL_TOPICS && !TOPICS.includes(topic)) topic = ALL_TOPICS;
+  let level = getSavedLevel();
+  if (level !== ALL_LEVELS && !LEVELS[level]) level = ALL_LEVELS;
   const screen = el('div', { class: 'screen menu' });
+  // 字太少（少於 MIN_POOL 個）的主題＋程度組合不能選，免得一直出同一個字
+  const MIN_POOL = 4;
+  const levelOk = (t, l) => l === ALL_LEVELS || wordsForTopic(t, l).length >= MIN_POOL;
 
   const render = () => {
+    if (!levelOk(topic, level)) level = ALL_LEVELS;
     const coll = getCollection();
     const review = getReviewWords().length;
     screen.replaceChildren(el('div', { class: 'menu-inner' },
@@ -24,7 +30,13 @@ export function showMenu({ onStart }) {
           class: `btn chip-btn ${t === topic ? 'on' : ''}`, type: 'button',
           onclick: () => { topic = t; saveTopic(t); render(); },
         }, `${t} (${wordsForTopic(t).length})`))),
-      el('button', { class: 'btn primary huge', type: 'button', onclick: () => onStart(topic) }, '▶ 開始遊戲'),
+      el('div', { class: 'section-title' }, '選擇程度'),
+      el('div', { class: 'topics' }, [ALL_LEVELS, 1, 2, 3].map(l =>
+        el('button', {
+          class: `btn chip-btn ${l === level ? 'on' : ''}`, type: 'button', disabled: !levelOk(topic, l),
+          onclick: () => { level = l; saveLevel(l); render(); },
+        }, `${l === ALL_LEVELS ? '全部' : LEVELS[l]} (${wordsForTopic(topic, l).length})`))),
+      el('button', { class: 'btn primary huge', type: 'button', onclick: () => onStart(topic, level) }, '▶ 開始遊戲'),
       el('div', { class: 'row' },
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('words') }, `📖 單字圖鑑 ${coll.size}/${WORDS.length}`),
         el('button', { class: 'btn', type: 'button', onclick: () => showCodex('weapons') }, `⚔️ 武器道具圖鑑 ${gearSeenCount()}/${GEAR_TOTAL}`),
@@ -56,7 +68,7 @@ function codexWords() {
         const has = coll.has(w.en);
         return el('button', {
           class: `codex-word ${has ? 'has' : ''}`, type: 'button', onclick: () => has && speak(w.en),
-        }, el('span', { class: 'emoji' }, w.emoji), el('b', {}, has ? w.en : '？？？'), el('small', {}, w.zh));
+        }, el('span', { class: 'emoji' }, w.emoji), el('b', {}, has ? w.en : '？？？'), el('small', {}, `${w.zh}・${LEVELS[w.level]}`));
       })),
     ]),
   ];

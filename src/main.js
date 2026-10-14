@@ -47,9 +47,9 @@ const hooks = {
   },
 };
 
-function startRun(topic) {
+function startRun(topic, wordLevel) {
   clearUi();
-  run = newRun(topic);
+  run = newRun(topic, wordLevel);
   for (const w of run.weapons) markGearSeen('weapon', w.id);
   hud.show();
   game.scene.start('arena', { run, hooks });
@@ -58,7 +58,7 @@ function startRun(topic) {
 function finish(won) {
   hud.hide();
   showResults(run, won, {
-    onAgain: () => startRun(run.topic),
+    onAgain: () => startRun(run.topic, run.wordLevel),
     onMenu: goMenu,
   });
 }
