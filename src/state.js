@@ -28,12 +28,12 @@ export function newRun(topic) {
   return {
     topic,
     wave: 1,
-    hp: 20,
+    hp: 15,
     materials: 0,
     level: 1,
     xp: 0,
     pendingLevels: 0,
-    stats: { maxHp: 20, regen: 0, damage: 0, atkSpeed: 0, speed: 0, armor: 0, pickup: 0 },
+    stats: { maxHp: 15, regen: 0, damage: 0, atkSpeed: 0, speed: 0, armor: 0, pickup: 0 },
     weapons: [{ id: 'pistol', tier: 0 }],
     items: {},
     shop: { slots: [], rerolls: 0 },
@@ -81,5 +81,5 @@ export function armorReduction(armor) {
 }
 
 export function priceForWave(base, wave) {
-  return Math.round(base * (1 + 0.1 * (wave - 1)));
+  return Math.round(base * (1 + 0.15 * (wave - 1)));
 }

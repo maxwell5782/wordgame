@@ -3,13 +3,13 @@
 export const WEAPONS = {
   pistol: {
     name: '手槍', icon: '🔫', desc: '穩定的單發射擊，什麼距離都好用。', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
-    baseCost: 12, damage: 12, cooldown: 0.9, range: 420, bulletSpeed: 950,
+    baseCost: 12, damage: 10, cooldown: 0.9, range: 420, bulletSpeed: 950,
     pellets: 1, spread: 0, pierce: 0,
   },
   shotgun: {
     name: '散彈槍', icon: '💥', desc: '近距離一次射出好幾發，每升一階多 1 發。', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
-    baseCost: 20, damage: 5, cooldown: 1.3, range: 300, bulletSpeed: 850,
-    pellets: 4, spread: 0.55, pierce: 0,
+    baseCost: 20, damage: 4, cooldown: 1.3, range: 300, bulletSpeed: 850,
+    pellets: 3, spread: 0.55, pierce: 0,
   },
   knife: {
     name: '飛刀', icon: '🗡️', desc: '出手很快又能穿透敵人，每升一階多穿透 1 隻。', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
@@ -41,6 +41,12 @@ export function weaponStats(w, stats) {
     bulletTex: d.bulletTex,
     color: d.color,
   };
+}
+
+// 射程顯示成小孩看得懂的遠近，括號裡是實際像素
+export function rangeLabel(range) {
+  const word = range >= 400 ? '遠' : range >= 290 ? '中' : '近';
+  return `${word}（${range}）`;
 }
 
 export function weaponBaseCost(id, tier) {
