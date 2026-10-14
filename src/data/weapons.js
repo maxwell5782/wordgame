@@ -1,0 +1,46 @@
+// 武器資料。tier 0~3 = 白、藍、紫、金，兩把同名同階武器可以合成下一階。
+export const WEAPONS = {
+  pistol: {
+    name: '手槍', icon: '🔫', tex: 'w_pistol', bulletTex: 'bullet', color: 0xffe066,
+    baseCost: 12, damage: 10, cooldown: 0.9, range: 420, bulletSpeed: 750,
+    pellets: 1, spread: 0, pierce: 0,
+  },
+  shotgun: {
+    name: '散彈槍', icon: '💥', tex: 'w_shotgun', bulletTex: 'bullet', color: 0xff9f43,
+    baseCost: 20, damage: 5, cooldown: 1.3, range: 300, bulletSpeed: 650,
+    pellets: 4, spread: 0.55, pierce: 0,
+  },
+  knife: {
+    name: '飛刀', icon: '🗡️', tex: 'w_knife', bulletTex: 'blade', color: 0xc8f7ff,
+    baseCost: 16, damage: 8, cooldown: 0.55, range: 260, bulletSpeed: 900,
+    pellets: 1, spread: 0, pierce: 1,
+  },
+};
+
+export const WEAPON_IDS = Object.keys(WEAPONS);
+export const MAX_WEAPONS = 6;
+
+const TIER_DMG = [1, 1.6, 2.4, 3.6];
+const TIER_CD = [1, 0.9, 0.8, 0.7];
+const TIER_COST = [1, 2, 4, 8];
+
+export function weaponStats(w, stats) {
+  const d = WEAPONS[w.id];
+  return {
+    damage: Math.max(1, Math.round(d.damage * TIER_DMG[w.tier] * (1 + stats.damage / 100))),
+    cooldown: d.cooldown * TIER_CD[w.tier] / Math.max(0.2, 1 + stats.atkSpeed / 100),
+    range: d.range,
+    bulletSpeed: d.bulletSpeed,
+    // 散彈槍每升一階多一發，飛刀每升一階多穿透一隻
+    pellets: d.pellets + (w.id === 'shotgun' ? w.tier : 0),
+    spread: d.spread,
+    pierce: d.pierce + (w.id === 'knife' ? w.tier : 0),
+    tex: d.tex,
+    bulletTex: d.bulletTex,
+    color: d.color,
+  };
+}
+
+export function weaponBaseCost(id, tier) {
+  return WEAPONS[id].baseCost * TIER_COST[tier];
+}
