@@ -68,8 +68,11 @@ export function applyEffects(run, effects) {
   for (const [k, v] of Object.entries(effects)) run.stats[k] += v;
 }
 
+// 玩家基礎移動速度（像素/秒）；改這裡時記得一起看敵人速度
+export const BASE_PLAYER_SPEED = 330;
+
 export function playerSpeed(stats) {
-  return Math.max(80, 220 * (1 + stats.speed / 100));
+  return Math.max(BASE_PLAYER_SPEED * 0.4, BASE_PLAYER_SPEED * (1 + stats.speed / 100));
 }
 
 // 護甲的減傷比例，護甲越高收益越低

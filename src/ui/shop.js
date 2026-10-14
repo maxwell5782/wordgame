@@ -62,17 +62,15 @@ function weaponDesc(w, run) {
   return parts.join(' · ');
 }
 
-function tryAddWeapon(run, id, tier) {
-  if (run.weapons.length < MAX_WEAPONS) {
-    run.weapons.push({ id, tier });
-    return 'added';
-  }
-  const dup = run.weapons.find(w => w.id === id && w.tier === tier && tier < 3);
-  if (dup) {
-    dup.tier += 1;
-    return 'merged';
-  }
-  return null;
+// 買武器時：有同名同階就直接合成（不佔格子），有空位就放進去，都不行就要替換
+function weaponBuyMode(run, id, tier) {
+  if (tier < 3 && run.weapons.some(w => w.id === id && w.tier === tier)) return 'merge';
+  if (run.weapons.length < MAX_WEAPONS) return 'add';
+  return 'replace';
+}
+
+function sellPrice(w, run) {
+  return Math.floor(priceForWave(weaponBaseCost(w.id, w.tier), run.wave) * 0.4);
 }
 
 export function openShop(run, onNext, onQuit) {
@@ -81,26 +79,56 @@ export function openShop(run, onNext, onQuit) {
 
   const screen = el('div', { class: 'screen shop' });
   let busy = false;
+  // 武器欄滿時買新武器：記住是哪一格商品，等玩家選一把要換掉的武器
+  let replacing = null;
+
+  const pay = (slot, price) => {
+    run.materials -= price;
+    slot.sold = true;
+    slot.locked = false;
+  };
 
   const buy = i => {
     const slot = run.shop.slots[i];
     const o = slot.offer;
     const price = offerPrice(o, run.wave);
     if (slot.sold || run.materials < price) return;
+    replacing = null;
     if (o.kind === 'weapon') {
-      const res = tryAddWeapon(run, o.id, o.tier);
-      if (!res) {
-        toast('武器欄滿了！先賣掉或合成一把', 'bad');
+      const mode = weaponBuyMode(run, o.id, o.tier);
+      if (mode === 'replace') {
+        replacing = i;
+        render();
         return;
       }
-      if (res === 'merged') toast(`${WEAPONS[o.id].name} 合成升級了！`, 'good');
+      if (mode === 'merge') {
+        const dup = run.weapons.find(w => w.id === o.id && w.tier === o.tier);
+        dup.tier += 1;
+        toast(`${WEAPONS[o.id].name} 合成升級成${RARITY[dup.tier].name}！`, 'good');
+      } else {
+        run.weapons.push({ id: o.id, tier: o.tier });
+      }
     } else {
       run.items[o.id] = (run.items[o.id] || 0) + 1;
       applyEffects(run, findItem(o.id).effects);
     }
-    run.materials -= price;
-    slot.sold = true;
-    slot.locked = false;
+    pay(slot, price);
+    render();
+  };
+
+  // 用商品 replacing 換掉身上第 k 把武器，舊武器照賣價退錢
+  const replaceWith = k => {
+    const slot = run.shop.slots[replacing];
+    replacing = null;
+    if (!slot || slot.sold) return render();
+    const o = slot.offer;
+    const price = offerPrice(o, run.wave);
+    const refund = sellPrice(run.weapons[k], run);
+    if (run.materials + refund < price) return render();
+    run.materials += refund;
+    run.weapons[k] = { id: o.id, tier: o.tier };
+    pay(slot, price);
+    toast(`換上 ${WEAPONS[o.id].name}！`, 'good');
     render();
   };
 
@@ -116,6 +144,7 @@ export function openShop(run, onNext, onQuit) {
       return;
     }
     busy = true;
+    replacing = null;
     run.materials -= cost;
     run.shop.rerolls += 1;
     render();
@@ -129,6 +158,7 @@ export function openShop(run, onNext, onQuit) {
     const w = run.weapons[i];
     const j = run.weapons.findIndex((o, k) => k !== i && o.id === w.id && o.tier === w.tier);
     if (j < 0 || w.tier >= 3) return;
+    replacing = null;
     run.weapons.splice(j, 1);
     w.tier += 1;
     toast(`${WEAPONS[w.id].name} 升級成${RARITY[w.tier].name}！`, 'good');
@@ -137,8 +167,8 @@ export function openShop(run, onNext, onQuit) {
 
   const sell = i => {
     if (run.weapons.length <= 1) return;
-    const w = run.weapons[i];
-    run.materials += Math.floor(priceForWave(weaponBaseCost(w.id, w.tier), run.wave) * 0.4);
+    replacing = null;
+    run.materials += sellPrice(run.weapons[i], run);
     run.weapons.splice(i, 1);
     render();
   };
@@ -149,7 +179,9 @@ export function openShop(run, onNext, onQuit) {
     const price = offerPrice(o, run.wave);
     const isWeapon = o.kind === 'weapon';
     const def = isWeapon ? WEAPONS[o.id] : findItem(o.id);
-    return el('div', { class: `offer ${RARITY[o.tier].css}` },
+    const mode = isWeapon ? weaponBuyMode(run, o.id, o.tier) : null;
+    const hint = mode === 'merge' ? '合成 ' : mode === 'replace' ? '替換 ' : '';
+    return el('div', { class: `offer ${RARITY[o.tier].css} ${replacing === i ? 'picking' : ''}` },
       el('button', {
         class: `lock ${slot.locked ? 'on' : ''}`, type: 'button', 'aria-label': '鎖定',
         onclick: () => { slot.locked = !slot.locked; render(); },
@@ -160,22 +192,41 @@ export function openShop(run, onNext, onQuit) {
       el('div', { class: 'desc' }, isWeapon ? weaponDesc(o, run) : itemDesc(def)),
       el('button', {
         class: 'btn buy', type: 'button', disabled: run.materials < price || busy, onclick: () => buy(i),
-      }, `💎 ${price}`),
+      }, `${hint}💎 ${price}`),
     );
   }
 
   function weaponCard(w, i) {
     const canCombine = w.tier < 3 && run.weapons.some((o, k) => k !== i && o.id === w.id && o.tier === w.tier);
     const def = WEAPONS[w.id];
-    return el('div', { class: `inv-weapon ${RARITY[w.tier].css}` },
+    let buttons;
+    if (replacing !== null) {
+      const price = offerPrice(run.shop.slots[replacing].offer, run.wave);
+      const refund = sellPrice(w, run);
+      buttons = [el('button', {
+        class: 'btn mini good', type: 'button', disabled: run.materials + refund < price, onclick: () => replaceWith(i),
+      }, `換掉這把（退 💎${refund}）`)];
+    } else {
+      buttons = [
+        canCombine ? el('button', { class: 'btn mini good', type: 'button', onclick: () => combine(i) }, '合成') : null,
+        run.weapons.length > 1 ? el('button', { class: 'btn mini', type: 'button', onclick: () => sell(i) },
+          `賣 💎${sellPrice(w, run)}`) : null,
+      ];
+    }
+    return el('div', { class: `inv-weapon ${RARITY[w.tier].css} ${replacing !== null ? 'picking' : ''}` },
       el('div', { class: 'icon' }, def.icon),
       el('div', { class: 'name' }, def.name),
       el('div', { class: 'desc' }, weaponDesc(w, run)),
-      el('div', { class: 'row' },
-        canCombine ? el('button', { class: 'btn mini good', type: 'button', onclick: () => combine(i) }, '合成') : null,
-        run.weapons.length > 1 ? el('button', { class: 'btn mini', type: 'button', onclick: () => sell(i) },
-          `賣 💎${Math.floor(priceForWave(weaponBaseCost(w.id, w.tier), run.wave) * 0.4)}`) : null,
-      ),
+      el('div', { class: 'row' }, ...buttons),
+    );
+  }
+
+  function replaceBanner() {
+    if (replacing === null) return null;
+    const o = run.shop.slots[replacing].offer;
+    return el('div', { class: 'replace-banner' },
+      el('span', {}, `武器欄滿了（最多 ${MAX_WEAPONS} 把）：選一把換成 ${WEAPONS[o.id].icon} ${WEAPONS[o.id].name}`),
+      el('button', { class: 'btn mini', type: 'button', onclick: () => { replacing = null; render(); } }, '取消'),
     );
   }
 
@@ -203,6 +254,7 @@ export function openShop(run, onNext, onQuit) {
       ),
       el('div', { class: 'inventory' },
         el('div', { class: 'section-title' }, `武器 ${run.weapons.length}/${MAX_WEAPONS}`),
+        replaceBanner(),
         el('div', { class: 'inv-weapons' }, run.weapons.map(weaponCard)),
         items.length ? el('div', { class: 'section-title' }, '道具') : null,
         items.length ? el('div', { class: 'inv-items' }, items.map(([id, n]) => {

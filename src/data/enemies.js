@@ -1,8 +1,9 @@
 // 敵人資料。r 是碰撞半徑，drop 是死亡掉落的材料數。
+// speed 是每秒移動的像素，和玩家基礎速度（state.js 的 BASE_PLAYER_SPEED）一起調整。
 export const ENEMIES = {
-  slime: { name: '史萊姆', r: 15, color: 0x5ee08a, hp: 8, speed: 70, dmg: 1, drop: 1 },
-  runner: { name: '衝衝鬼', r: 12, color: 0xff8a4c, hp: 5, speed: 135, dmg: 1, drop: 1 },
-  tank: { name: '大胖怪', r: 24, color: 0xb070ff, hp: 32, speed: 45, dmg: 2, drop: 3 },
+  slime: { name: '史萊姆', r: 15, color: 0x5ee08a, hp: 8, speed: 105, dmg: 1, drop: 1 },
+  runner: { name: '衝衝鬼', r: 12, color: 0xff8a4c, hp: 5, speed: 200, dmg: 1, drop: 1 },
+  tank: { name: '大胖怪', r: 24, color: 0xb070ff, hp: 32, speed: 70, dmg: 2, drop: 3 },
 };
 
 export function pickEnemyType(wave) {

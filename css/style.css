@@ -240,3 +240,7 @@ button.chip { cursor: pointer; }
   .card { padding: 10px; }
   .btn { min-height: 40px; padding: 6px 12px; }
 }
+
+/* 武器欄滿時選一把替換 */
+.replace-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; padding: 8px 10px; border: 2px dashed var(--good); border-radius: 10px; font-size: 14px; font-weight: 700; }
+.offer.picking, .inv-weapon.picking { box-shadow: 0 0 0 3px var(--good); }

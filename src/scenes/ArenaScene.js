@@ -249,7 +249,7 @@ export class ArenaScene extends Phaser.Scene {
     for (let i = 0; i < 12; i++) {
       cx = Phaser.Math.Between(ARENA.x + 60, ARENA.right - 60);
       cy = Phaser.Math.Between(ARENA.y + 60, ARENA.bottom - 60);
-      if (Phaser.Math.Distance.Between(cx, cy, this.player.x, this.player.y) > 260) break;
+      if (Phaser.Math.Distance.Between(cx, cy, this.player.x, this.player.y) > 320) break;
     }
     const n = 1 + Math.floor(wave / 3) + Math.floor(this.elapsed / 20) + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < n; i++) {
@@ -360,7 +360,7 @@ export class ArenaScene extends Phaser.Scene {
     e.hp -= b.dmg;
     e.setTintFill(0xffffff);
     e.flash = 0.06;
-    const kb = 7;
+    const kb = 10;
     const a = Math.atan2(b.body.velocity.y, b.body.velocity.x);
     e.x += Math.cos(a) * kb;
     e.y += Math.sin(a) * kb;
@@ -409,7 +409,8 @@ export class ArenaScene extends Phaser.Scene {
         got += 1;
         return;
       }
-      const s = Math.min(d, 560 * dt);
+      // 被吸過來的材料要比玩家跑得快，才追得上
+      const s = Math.min(d, 900 * dt);
       m.x += dx / d * s;
       m.y += dy / d * s;
     });
