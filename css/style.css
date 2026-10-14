@@ -40,6 +40,8 @@ html, body {
 }
 
 #game { position: fixed; inset: 0; }
+/* 看不見的密碼欄位，只用來讓電腦關掉中文輸入法（見 src/input/keyboard.js） */
+#key-sink { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; pointer-events: none; }
 
 /* ---------- HUD ---------- */
 #hud {

@@ -2,6 +2,8 @@
 import { WORDS, TOPICS, ALL_TOPICS, LEVELS, ALL_LEVELS, wordsForTopic, findWord } from '../data/words.js';
 import { WEAPONS, WEAPON_IDS, weaponStats, weaponTraits, weaponTierExtras } from '../data/weapons.js';
 import { ITEMS, itemDesc } from '../data/items.js';
+import { BOSSES, BOSS_IDS, BOSS_EVERY, BOSS_ENRAGE_TIME, BOSS_ENRAGE_SPEED, BOSS_ENRAGE_CD, attackDesc } from '../data/bosses.js';
+import { SPRITES, spriteDataUrl } from '../art/pixel.js';
 import { RARITY, STATS, MAX_WAVES, MAX_REVIVES, REVIVE_HP, REVIVE_INVULN, applyEffects, formatStat } from '../state.js';
 import { getCollection, getReviewWords, reviewRemaining, getSavedTopic, saveTopic, getSavedLevel, saveLevel, hasSeenGear } from '../progress.js';
 import { speak, canSpeak, getEnglishVoices, getVoice, isAutoVoice, setVoice, onVoicesChanged } from '../speech.js';
@@ -24,7 +26,7 @@ export function showMenu({ onStart }) {
     const review = getReviewWords().length;
     screen.replaceChildren(el('div', { class: 'menu-inner' },
       el('h1', {}, '單字大作戰'),
-      el('p', { class: 'sub' }, '撐過 10 波怪物，用英文單字換更強的裝備！'),
+      el('p', { class: 'sub' }, `撐過 ${MAX_WAVES} 波怪物、打倒 ${BOSS_IDS.length} 隻魔王，用英文單字換更強的裝備！`),
       el('div', { class: 'section-title' }, '選擇單字主題'),
       el('div', { class: 'topics' }, [ALL_TOPICS, ...TOPICS].map(t =>
         el('button', {
@@ -132,10 +134,39 @@ function codexItems() {
   ];
 }
 
+function codexBosses() {
+  const seen = BOSS_IDS.filter(id => hasSeenGear('boss', id)).length;
+  return [
+    el('p', { class: 'help' }, `已遇過 ${seen}/${BOSS_IDS.length}。每 ${BOSS_EVERY} 波出現一隻魔王，打倒牠這一波才會結束；`
+      + `出場 ${BOSS_ENRAGE_TIME} 秒後狂暴（移動速度 ×${BOSS_ENRAGE_SPEED}、出招間隔 ×${BOSS_ENRAGE_CD}）。被魔王的子彈或招式打到，護甲一樣能減傷。`),
+    el('div', { class: 'gear-grid boss-grid' }, BOSS_IDS.map(id => {
+      const d = BOSSES[id];
+      if (!hasSeenGear('boss', id)) {
+        return el('div', { class: 'gear-card locked' },
+          el('div', { class: 'icon' }, '❔'),
+          el('div', { class: 'gear-body' },
+            el('div', { class: 'name' }, `第 ${d.wave} 波魔王`),
+            el('div', { class: 'desc' }, '遇到這隻魔王就會解鎖')));
+      }
+      // 同一招出現兩次只列一次
+      const attacks = d.attacks.filter((a, i) => d.attacks.findIndex(b => b.name === a.name) === i);
+      return el('div', { class: 'gear-card' },
+        el('img', { class: 'boss-img', src: spriteDataUrl(SPRITES[d.tex], 3), alt: d.name }),
+        el('div', { class: 'gear-body' },
+          el('div', { class: 'name' }, `${d.icon} ${d.name}（第 ${d.wave} 波）`),
+          el('div', { class: 'desc' }, d.desc),
+          el('div', { class: 'desc' }, [`❤️ 生命 ${d.hp}`, `💥 碰撞傷害 ${d.dmg}`, `👟 速度 ${d.speed}`, `⏱️ 出招間隔 ${d.cooldown} 秒`,
+            d.drop ? `💎 掉落 ${d.drop}` : null, '推不動（不吃擊退）'].filter(Boolean).join(' · ')),
+          el('ul', { class: 'boss-attacks' }, attacks.map(a => el('li', {}, el('b', {}, a.name), '：', attackDesc(a))))));
+    })),
+  ];
+}
+
 const CODEX_TABS = {
   words: { label: '📖 單字', render: codexWords },
   weapons: { label: '⚔️ 武器', render: codexWeapons },
   items: { label: '🎒 道具', render: codexItems },
+  bosses: { label: '👑 魔王', render: codexBosses },
 };
 
 export function showCodex(tab = 'words') {

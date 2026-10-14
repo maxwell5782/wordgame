@@ -241,15 +241,131 @@ export const SPRITES = {
       'y.wwwww..',
     ]],
   },
+  // 魔王（每 5 波出一隻）：用比較粗的像素（px 6）畫，看起來特別巨大
+  b_slime_king: {
+    px: 6,
+    pal: { k: OUTLINE, g: '#5ee08a', G: '#2fa35c', l: '#c8ffd8', w: '#ffffff', y: '#ffd84d', Y: '#c48a00', r: '#ff4d5e', m: '#7a1f35' },
+    frames: [[
+      '.......k....kk....k.....',
+      '......kyk..kyyk..kyk....',
+      '......kyykkyrryk.kyyk...',
+      '......kyyyyyyyyyykyyk...',
+      '......kyyyyyyyyyyyyyk...',
+      '......kYYYYYYYYYYYYYk...',
+      '....kkkkkkkkkkkkkkkkkk..',
+      '...kgllllggggggggggggGk.',
+      '..kgllggggggggggggggggGk',
+      '.kglgggggggggggggggggGGk',
+      '.kgggggkkkkggggkkkkggGGk',
+      'kggggkwwwwkggkwwwwkgGGGk',
+      'kggggkwwkkkggkwwkkkgGGGk',
+      'kgggggkkkkggggkkkkggGGGk',
+      'kggggggggggggggggggggGGk',
+      'kggggggkkkkkkkkkggggggGk',
+      'kGgggggkmmrrrmmkgggggGGk',
+      'kGggggggkkkkkkkggggggGGk',
+      'kGGgggggggggggggggggGGGk',
+      'kGGGgggggggggggggggGGGGk',
+      '.kGGGGGGGGGGGGGGGGGGGGk.',
+      '..kkkkkkkkkkkkkkkkkkkk..',
+    ], [
+      '........................',
+      '.......k....kk....k.....',
+      '......kyk..kyyk..kyk....',
+      '......kyykkyrryk.kyyk...',
+      '......kyyyyyyyyyykyyk...',
+      '......kyyyyyyyyyyyyyk...',
+      '......kYYYYYYYYYYYYYk...',
+      '....kkkkkkkkkkkkkkkkkk..',
+      '...kgllllggggggggggggGk.',
+      '.kglgggggggggggggggggGGk',
+      '.kgggggkkkkggggkkkkggGGk',
+      'kggggkwwwwkggkwwwwkgGGGk',
+      'kggggkwwkkkggkwwkkkgGGGk',
+      'kgggggkkkkggggkkkkggGGGk',
+      'kggggggggggggggggggggGGk',
+      'kggggggkkkkkkkkkggggggGk',
+      'kGgggggkmmrrrmmkgggggGGk',
+      'kGggggggkkkkkkkggggggGGk',
+      'kGGgggggggggggggggggGGGk',
+      'kGGGgggggggggggggggGGGGk',
+      '.kGGGGGGGGGGGGGGGGGGGGk.',
+      '..kkkkkkkkkkkkkkkkkkkk..',
+    ]],
+  },
+  b_fire_dragon: {
+    px: 6,
+    pal: { k: OUTLINE, r: '#e8452c', R: '#a82a1e', H: '#f0e0c0', d: '#7a1f35', y: '#ffd84d', o: '#ff9f43', w: '#ffffff' },
+    frames: [[
+      '..kk..................kk..',
+      '.kHHk................kHHk.',
+      '.kHHHk..............kHHHk.',
+      '..kHHHkkkkkkkkkkkkkkHHHk..',
+      '...kHrrrrrrrrrrrrrrrrHk...',
+      'kk..krrrrrrrrrrrrrrrrk..kk',
+      'kdk.krryyyyrrrryyyyrrk.kdk',
+      'kddkkrykkkyrrrrykkkyrkkddk',
+      'kdddkrrykyyrrrryykyrrkdddk',
+      'kddddkrryyrrrrrryyrrkddddk',
+      'kdddkrrrrrrrrrrrrrrrrkdddk',
+      'kddkrrrrrRRRRRRRRrrrrrkddk',
+      'kdk.krrRRRRRRRRRRRRrrk.kdk',
+      'kk..krRRkkRRRRRRkkRRrk..kk',
+      '....krRRRRRRRRRRRRRRrk....',
+      '....kRkwkwkwkwkwkwkwRk....',
+      '....kRkooooooooooookRk....',
+      '....kRkwkwkwkwkwkwkwRk....',
+      '.....kRRRRRRRRRRRRRRk.....',
+      '......kRRkkkkkkkkRRk......',
+      '......kkk........kkk......',
+    ], [
+      '..........................',
+      '..kk..................kk..',
+      '.kHHk................kHHk.',
+      '.kHHHk..............kHHHk.',
+      '..kHHHkkkkkkkkkkkkkkHHHk..',
+      '...kHrrrrrrrrrrrrrrrrHk...',
+      'kdk.krryyyyrrrryyyyrrk.kdk',
+      'kddkkrykkkyrrrrykkkyrkkddk',
+      'kdddkrrykyyrrrryykyrrkdddk',
+      'kddddkrryyrrrrrryyrrkddddk',
+      'kdddkrrrrrrrrrrrrrrrrkdddk',
+      'kddkrrrrrRRRRRRRRrrrrrkddk',
+      'kdk.krrRRRRRRRRRRRRrrk.kdk',
+      'kk..krRRkkRRRRRRkkRRrk..kk',
+      '....krRRRRRRRRRRRRRRrk....',
+      '....kRkwkwkwkwkwkwkwRk....',
+      '....kRkooooooooooookRk....',
+      '....kRkwkwkwkwkwkwkwRk....',
+      '.....kRRRRRRRRRRRRRRk.....',
+      '......kRRkkkkkkkkRRk......',
+      '......kkk........kkk......',
+    ]],
+  },
+  // 魔王的子彈（白色，遊戲中依招式上色）
+  orb: {
+    pal: { k: OUTLINE, w: '#ffffff', g: '#d0d0d0' },
+    frames: [[
+      '..kkkk..',
+      '.kwwwwk.',
+      'kwwwwwgk',
+      'kwwwwwgk',
+      'kwwwwggk',
+      'kwwwgggk',
+      '.kgggkk.',
+      '..kkkk..',
+    ]],
+  },
 };
 
-// 把一張圖畫成 Phaser 貼圖；多個影格橫向排列，影格名稱是 0、1、2…
+// 把一張圖畫成 Phaser 貼圖（def.px 可以指定比較粗的像素）；多個影格橫向排列，影格名稱是 0、1、2…
 export function makePixelTexture(scene, key, def) {
+  const px = def.px ?? PX;
   const rows = def.frames[0];
   const fw = rows[0].length;
   const fh = rows.length;
   const n = def.frames.length;
-  const tex = scene.textures.createCanvas(key, fw * PX * n, fh * PX);
+  const tex = scene.textures.createCanvas(key, fw * px * n, fh * px);
   const ctx = tex.getContext();
   def.frames.forEach((frame, i) => {
     frame.forEach((row, y) => {
@@ -257,10 +373,10 @@ export function makePixelTexture(scene, key, def) {
         const c = def.pal[row[x]];
         if (!c) continue;
         ctx.fillStyle = c;
-        ctx.fillRect((i * fw + x) * PX, y * PX, PX, PX);
+        ctx.fillRect((i * fw + x) * px, y * px, px, px);
       }
     });
-    tex.add(i, 0, i * fw * PX, 0, fw * PX, fh * PX);
+    tex.add(i, 0, i * fw * px, 0, fw * px, fh * px);
   });
   tex.refresh();
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -372,4 +488,22 @@ export function makeArenaTexture(scene, key, w, h, arena) {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(small, 0, 0, lw * PX, lh * PX);
   tex.refresh();
+}
+
+// 把一張圖的第一個影格畫成圖片網址，給圖鑑等 HTML 畫面用
+export function spriteDataUrl(def, px = 3) {
+  const rows = def.frames[0];
+  const c = document.createElement('canvas');
+  c.width = rows[0].length * px;
+  c.height = rows.length * px;
+  const ctx = c.getContext('2d');
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const col = def.pal[row[x]];
+      if (!col) continue;
+      ctx.fillStyle = col;
+      ctx.fillRect(x * px, y * px, px, px);
+    }
+  });
+  return c.toDataURL();
 }
