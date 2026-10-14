@@ -68,8 +68,35 @@ export function applyEffects(run, effects) {
   for (const [k, v] of Object.entries(effects)) run.stats[k] += v;
 }
 
-// 玩家基礎移動速度（像素/秒）；改這裡時記得一起看敵人速度
-export const BASE_PLAYER_SPEED = 330;
+// 被敵人撞到後的無敵時間（秒）
+export const INVULN_TIME = 0.6;
+// 基礎拾取範圍（像素），加上「拾取範圍」能力
+export const BASE_PICKUP = 70;
+// 每 1 點生命回復，每秒回多少血
+export const REGEN_PER_POINT = 0.2;
+
+// 能力的實際效果，顯示在商店的能力欄
+export function statDetail(key, stats) {
+  const v = stats[key];
+  switch (key) {
+    case 'regen': return `每秒回 ${Math.round(v * REGEN_PER_POINT * 10) / 10} 血`;
+    case 'speed': return `${Math.round(playerSpeed(stats))} 像素/秒`;
+    case 'armor': return `受傷 ${armorReduction(v) >= 0 ? '-' : '+'}${Math.abs(Math.round(armorReduction(v) * 100))}%`;
+    case 'pickup': return `範圍 ${BASE_PICKUP + v} 像素`;
+    default: return null;
+  }
+}
+
+// 不會變的規則，也一起顯示給玩家看
+export const RULES = [
+  `被撞後無敵 ${INVULN_TIME} 秒`,
+  '每波開始血量補滿',
+  '升級時最大生命 +1',
+  '波次結束時地上的材料自動收進來',
+];
+
+// 玩家基礎移動速度（像素/秒），只比第 10 波的衝衝鬼（200×1.18≈236）快一點；改這裡時記得一起看敵人速度
+export const BASE_PLAYER_SPEED = 250;
 
 export function playerSpeed(stats) {
   return Math.max(BASE_PLAYER_SPEED * 0.4, BASE_PLAYER_SPEED * (1 + stats.speed / 100));
