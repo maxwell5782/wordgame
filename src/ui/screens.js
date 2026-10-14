@@ -179,6 +179,7 @@ export function showLevelUp(run) {
       quizState = 'busy';
       render();
       const correct = await openQuiz(LEVELUP_QUIZ, run, {
+        reward: '四個能力選項都升一階（答錯選項不變）',
         resultNote: ok => ok ? '四個能力選項都升一階！' : '這次選項不變，這個字會放進複習清單。',
       });
       if (correct) for (const o of options) o.tier = Math.min(3, o.tier + 1);
@@ -255,6 +256,7 @@ export function showRevive(run) {
       run.revives += 1;
       const pct = REVIVE_HP[key];
       const correct = await openQuiz(key, run, {
+        reward: `接關，回復 ${Math.round(pct * 100)}% 生命、無敵 ${REVIVE_INVULN} 秒（答錯就結算）`,
         resultNote: ok => ok ? `接關成功！回復 ${Math.round(pct * 100)}% 生命，無敵 ${REVIVE_INVULN} 秒` : '這次沒有接關，這個字會放進複習清單。',
       });
       resolve(correct ? pct : 0);
