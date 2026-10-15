@@ -61,6 +61,15 @@ jobs:
             rm -rf "site/preview/$slug"
           fi
 
+          # 同時刪很多分支時，排隊中的發布會被取消，所以每次都把「分支已不存在」的預覽一併清掉
+          live=$(git ls-remote --heads "$url" | sed 's#.*refs/heads/##' | tr -c 'A-Za-z0-9._\n-' '-')
+          for d in site/preview/*/; do
+            [ -d "$d" ] || continue
+            n=$(basename "$d")
+            if [ "$EVENT" = push ] && [ "$n" = "$slug" ]; then continue; fi
+            printf '%s\n' "$live" | grep -qxF "$n" || rm -rf "$d"
+          done
+
           # 預覽清單頁
           mkdir -p site/preview
           {
